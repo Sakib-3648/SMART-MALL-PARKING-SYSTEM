@@ -1,0 +1,75 @@
+﻿@page
+@model MyParkingModel
+
+@{
+    ViewData["Title"] = "My Parking";
+}
+
+<div class="container mt-5">
+
+    <h1 class="text-center mb-4">
+        🅿️ My Parking
+    </h1>
+    <div class="mb-3">
+        <a asp-page="/Index" class="btn btn-secondary">
+            ← Back to Home
+        </a>
+    </div>
+
+    @if (Model.ActiveSession != null && Model.ParkingSpace != null)
+    {
+        <div class="card mx-auto" style="max-width: 500px;">
+
+            <div class="card-body text-center">
+
+                <h3>Parking Active</h3>
+
+                <hr />
+
+                <h2 class="text-primary">
+                    @Model.ParkingSpace.SpaceNumber
+                </h2>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="text-success">Active</span>
+                </p>
+                <p>
+                    <strong>Vehicle Number:</strong><br />
+                    @Model.VehicleNumber
+                </p>
+                <p>
+                    <strong>Start Time:</strong><br />
+                    @Model.ActiveSession.StartTime.ToString("dd/MM/yyyy HH:mm")
+                </p>
+
+                <p>
+                    <strong>Current Fee:</strong><br />
+                    RM @Model.CurrentFee.ToString("0.00")
+                </p>
+
+                <form method="post" asp-page-handler="EndParking">
+                    <button type="submit" class="btn btn-danger">
+                        End Parking
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            You currently have no active parking session.
+        </div>
+
+        <div class="text-center">
+            <a href="/Parking/Availability"
+               class="btn btn-primary">
+                Find Parking
+            </a>
+        </div>
+    }
+
+</div>

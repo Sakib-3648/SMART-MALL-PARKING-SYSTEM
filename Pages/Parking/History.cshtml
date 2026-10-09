@@ -1,0 +1,77 @@
+﻿@page
+@model HistoryModel
+
+@{
+    ViewData["Title"] = "Parking History";
+}
+
+<div class="container mt-5">
+
+    <h1 class="text-center mb-4">
+        📋 Parking History
+    </h1>
+    <div class="mb-3">
+        <a asp-page="/Index" class="btn btn-secondary">
+            ← Back to Home
+        </a>
+    </div>
+
+    @if (Model.Sessions.Any())
+    {
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped">
+
+                <thead>
+                    <tr>
+                        <th>Parking Space</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Fee</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var session in Model.Sessions)
+                    {
+                        <tr>
+                            <td>
+                                P@(session.ParkingSpaceId.ToString("00"))
+                            </td>
+
+                            <td>
+                                @session.StartTime.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+
+                            <td>
+                                @(session.EndTime?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+                            </td>
+
+                            <td>
+                                RM @session.Fee.ToString("0.00")
+                            </td>
+
+                            <td>
+                                <span class="text-success">
+                                    @session.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            No parking history found.
+        </div>
+    }
+
+</div>

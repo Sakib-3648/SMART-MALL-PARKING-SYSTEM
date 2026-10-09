@@ -1,0 +1,71 @@
+﻿@page
+@model IndexModel
+
+@{
+    ViewData["Title"] = "Smart Mall Parking";
+}
+
+<div class="text-center"
+     style="font-size: 20px;">
+    <h1>Smart Mall Parking System</h1>
+    
+
+    <p>
+        Welcome to the Smart Mall Parking System
+    </p>
+    @if (Model.UserId != null)
+    {
+        <p class="text-success">
+            Welcome back, <strong>@Model.FullName</strong>!
+        </p>
+
+        <p>
+            Vehicle Number: <strong>@Model.VehicleNumber</strong>
+        </p>
+        <p>
+            Current Parking:
+            <strong>
+                @if (Model.CurrentParkingStatus == "Active")
+                {
+                    @($"{Model.CurrentParkingSpace} — Active")
+                }
+                else
+                {
+                    @Model.CurrentParkingStatus
+                }
+            </strong>
+
+        </p>
+        @if (Model.CurrentParkingStatus == "Active")
+        {
+            <p>
+                Parking Duration:
+                <strong>@Model.ParkingDuration</strong>
+            </p>
+            <p>
+                Estimated Fee:
+                <strong>RM @Model.CurrentFee.ToString("0.00")</strong>
+            </p>
+        }
+    }
+
+    @if (Model.UserId == null)
+    {
+        <div>
+            <a class="btn btn-primary" href="/Login">Login</a>
+            <a class="btn btn-success" href="/Register">Register</a>
+           
+        </div>
+    }
+    else
+    {
+        <div>
+            <a class="btn btn-primary" href="/Parking/Availability">Find Parking</a>
+            <a class="btn btn-warning" href="/Parking/Reserve">Reserve Parking</a>
+            <a class="btn btn-info" href="/Parking/MyReservation">My Reservations</a>
+            <a class="btn btn-success" href="/Parking/MyParking">My Parking</a>
+            <a class="btn btn-secondary" href="/Parking/History">Parking History</a>
+            <a class="btn btn-danger" href="/Logout">Logout</a>
+        </div>
+    }
+</div>

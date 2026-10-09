@@ -1,0 +1,225 @@
+﻿@page
+@model AvailabilityModel
+
+@{
+    ViewData["Title"] = "Parking Availability";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-end align-items-center mb-3">
+    <span class="badge bg-success fs-5 me-3">
+            Available Spaces: @Model.ParkingSpaces.Count(p =>
+                !p.IsOccupied &&
+                !p.IsBlocked &&
+                !Model.ReservedSpaceIds.Contains(p.ParkingSpaceId))
+            / @Model.ParkingSpaces.Count
+    </span>
+
+    <a asp-page="/Index" class="btn btn-primary">
+        Home
+    </a>
+</div>
+
+    <h1 class="text-center mb-4">
+        🅿️ Smart Mall Parking
+    </h1>
+
+    <h3 class="text-center mb-4">
+        Parking Availability
+    </h3>
+
+    <div class="row">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Available Parking Spaces</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var space in Model.ParkingSpaces
+     .Where(s => !s.IsOccupied &&
+                 !s.IsBlocked &&
+                 !Model.ReservedSpaceIds.Contains(s.ParkingSpaceId)))
+                    {
+            <div class="col-md-3 mb-3">
+
+                <div class="card text-center
+                    @(space.IsOccupied ? "border-danger" : "border-success")">
+
+                    <div class="card-body">
+
+                        <h4>@space.SpaceNumber</h4>
+
+                        @if (space.IsOccupied)
+                        {
+                            <p class="text-danger">
+                                ● Occupied
+                            </p>
+
+                            <button class="btn btn-secondary" disabled>
+                                Occupied
+                            </button>
+                        }
+                        else if (Model.ReservedSpaceIds.Contains(space.ParkingSpaceId))
+                        {
+                            <p class="text-warning">
+                                ● Reserved
+                            </p>
+
+                            @if (Model.ReservedUntil.ContainsKey(space.ParkingSpaceId))
+                            {
+                                <p>
+                                    Available after:
+                                    <strong>
+                                        @Model.ReservedUntil[space.ParkingSpaceId].ToString("dd/MM/yyyy hh:mm tt")
+                                    </strong>
+                                </p>
+                            }
+
+                            <button class="btn btn-warning" disabled>
+                                Reserved
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="text-success">
+                                ● Available
+                            </p>
+
+                            <form method="post" asp-page-handler="Select">
+                                <input type="hidden"
+                                       name="parkingSpaceId"
+                                       value="@space.ParkingSpaceId" />
+
+                                <button type="submit" class="btn btn-success">
+                                    Select
+                                </button>
+                            </form>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+                </div>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h3 class="mb-0">Reserved Parking Spaces</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+
+                    @foreach (var space in Model.ParkingSpaces
+                        .Where(s => !s.IsOccupied && !s.IsBlocked &&
+                                    Model.ReservedSpaceIds.Contains(s.ParkingSpaceId)))
+                    {
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-center border-warning">
+                                <div class="card-body">
+
+                                    <h4>@space.SpaceNumber</h4>
+
+                                    <p class="text-warning">
+                                        ● Reserved
+                                    </p>
+
+                                    @if (Model.ReservedUntil.ContainsKey(space.ParkingSpaceId))
+                                    {
+                                        <p>
+                                            Available after:
+                                            <strong>
+                                                @Model.ReservedUntil[space.ParkingSpaceId].ToString("dd/MM/yyyy hh:mm tt")
+                                            </strong>
+                                        </p>
+                                    }
+
+                                    <button class="btn btn-warning" disabled>
+                                        Reserved
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">Occupied Parking Spaces</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+
+                    @foreach (var space in Model.ParkingSpaces
+                        .Where(s => s.IsOccupied))
+                    {
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-center border-danger">
+                                <div class="card-body">
+
+                                    <h4>@space.SpaceNumber</h4>
+
+                                    <p class="text-danger">
+                                        ● Occupied
+                                    </p>
+
+                                    <button class="btn btn-secondary" disabled>
+                                        Occupied
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0">Blocked Parking Spaces</h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+
+                        @foreach (var space in Model.ParkingSpaces
+                            .Where(s => s.IsBlocked))
+                        {
+                            <div class="col-md-3 mb-3">
+                                <div class="card text-center border-secondary">
+                                    <div class="card-body">
+
+                                        <h4>@space.SpaceNumber</h4>
+
+                                        <p class="text-secondary">
+                                            ● Blocked
+                                        </p>
+
+                                        <button class="btn btn-secondary" disabled>
+                                            Not Available
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        
+    </div>
+
+</div>

@@ -1,0 +1,85 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.DashboardModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Admin Dashboard</h1>
+    <div class="mb-3">
+        <a asp-page="/Admin/Logout" class="btn btn-danger">
+            Admin Logout
+        </a>
+    </div>
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h5>Reserved Spaces</h5>
+                    <h2>@Model.ReservedSpaces</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h2>@Model.TotalUsers</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-dark">
+                <div class="card-body">
+                    <h5>Total Parking Spaces</h5>
+                    <h2>@Model.TotalSpaces</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5>Available Spaces</h5>
+                    <h2>@Model.AvailableSpaces</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h5>Occupied Spaces</h5>
+                    <h2>@Model.OccupiedSpaces</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-secondary">
+                <div class="card-body">
+                    <h5>Blocked Spaces</h5>
+                    <h2>@Model.BlockedSpaces</h2>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a asp-page="/Admin/Users" class="btn btn-primary">
+                Manage Users
+            </a>
+
+            <a asp-page="/Admin/ParkingSpaces" class="btn btn-success">
+                Manage Parking Spaces
+            </a>
+            <a asp-page="/Admin/Reservations" class="btn btn-warning">
+                Manage Reservations
+            </a>
+            <a asp-page="/Admin/ParkingSessions" class="btn btn-info">
+                Parking Sessions
+            </a>
+        </div>
+    </div>
+
+</div>

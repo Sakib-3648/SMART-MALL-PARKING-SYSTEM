@@ -1,0 +1,76 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Parking.MyReservationModel
+
+@{
+    ViewData["Title"] = "My Reservations";
+}
+
+<div class="container mt-5">
+
+    <h1>My Reservations</h1>
+
+    <div class="mb-3">
+        <a asp-page="/Index" class="btn btn-secondary">
+            ← Back to Home
+        </a>
+    </div>
+    @if (Model.Reservations.Count == 0)
+{
+    <div class="alert alert-info">
+        You have no reservations.
+    </div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Parking Space</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var reservation in Model.Reservations)
+            {
+                <tr>
+                    <td>@reservation.ParkingSpace?.SpaceNumber</td>
+                    <td>@reservation.ReservationStart.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@reservation.ReservationEnd.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@reservation.Status</td>
+                    <td>
+    @if (reservation.Status == "Reserved")
+    {
+                                @if (DateTime.Now >= reservation.ReservationStart &&
+     DateTime.Now <= reservation.ReservationEnd)
+                                {
+                                    <form method="post" asp-page-handler="StartParking" class="mb-1">
+                                        <input type="hidden"
+                                               name="reservationId"
+                                               value="@reservation.ParkingReservationId" />
+
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            Start Parking
+                                        </button>
+                                    </form>
+                                }
+        <form method="post" asp-page-handler="Cancel">
+            <input type="hidden"
+                   name="reservationId"
+                   value="@reservation.ParkingReservationId" />
+
+            <button type="submit" class="btn btn-danger btn-sm">
+                Cancel
+            </button>
+        </form>
+    }
+</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+</div>

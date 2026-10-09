@@ -1,0 +1,147 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.ParkingSessionsModel
+
+@{
+    ViewData["Title"] = "Parking Sessions";
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">Parking Sessions</h2>
+
+    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-4">
+        Back to Admin Dashboard
+    </a>
+
+    <h3>Active Parking Sessions</h3>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Vehicle Number</th>
+                <th>Parking Space</th>
+                <th>Start Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var session in Model.ActiveSessions)
+            {
+                <tr>
+                    <td>@session.UserId</td>
+                    <td>@session.User?.FullName</td>
+                    <td>@session.User?.Email</td>
+                    <td>@session.User?.VehicleNumber</td>
+                    <td>@session.ParkingSpace?.SpaceNumber</td>
+                    <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                    <td>@session.Status</td>
+                    <td>
+                        <form method="post" asp-page-handler="ForceEnd" id="clearParkingForm">
+                            <input type="hidden"
+                                   name="parkingSessionId"
+                                   value="@session.ParkingSessionId" />
+
+                            <button type="button"
+                                    class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#clearParkingModal"
+                                    data-session-id="@session.ParkingSessionId">
+                                Clear Active Parking
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <h3 class="mt-5">Previous Parking History</h3>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Vehicle Number</th>
+                <th>Parking Space</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Fee</th>
+                <th>Status</th>
+               
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var session in Model.ParkingHistory)
+            {
+                <tr>
+                    <td>@session.UserId</td>
+                    <td>@session.User?.FullName</td>
+                    <td>@session.User?.Email</td>
+                    <td>@session.User?.VehicleNumber</td>
+                    <td>@session.ParkingSpace?.SpaceNumber</td>
+                    <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                    <td>@session.EndTime?.ToString("dd/MM/yyyy hh:mm tt")</td>
+                    <td>RM @session.Fee.ToString("0.00")</td>
+                    <td>@session.Status</td>
+                   
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="modal fade" id="clearParkingModal" tabindex="-1"
+         aria-labelledby="clearParkingModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clearParkingModalLabel">
+                        Confirm Clear Parking
+                    </h5>
+
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    Are you sure you want to clear this active parking session?
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-danger"
+                            onclick="document.getElementById('clearParkingForm').submit();">
+                        Clear Parking
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var clearParkingModal = document.getElementById('clearParkingModal');
+
+    clearParkingModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var sessionId = button.getAttribute('data-session-id');
+
+        var form = document.getElementById('clearParkingForm');
+        var input = form.querySelector('input[name="parkingSessionId"]');
+
+        input.value = sessionId;
+    });
+</script>

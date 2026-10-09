@@ -1,0 +1,49 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.ReservationsModel
+
+@{
+    ViewData["Title"] = "Manage Reservations";
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">Manage Reservations</h2>
+
+    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-3">
+        Back to Admin Dashboard
+    </a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Reservation ID</th>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Vehicle Number</th>
+                <th>Parking Space</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var reservation in Model.Reservations)
+            {
+                <tr>
+                    <td>@reservation.ParkingReservationId</td>
+                    <td>@reservation.UserId</td>
+                    <td>@reservation.User?.FullName</td>
+                    <td>@reservation.User?.Email</td>
+                    <td>@reservation.User?.VehicleNumber</td>
+                    <td>@reservation.ParkingSpace?.SpaceNumber</td>
+                    <td>@reservation.ReservationStart.ToString("dd/MM/yyyy hh:mm tt")</td>
+                    <td>@reservation.ReservationEnd.ToString("dd/MM/yyyy hh:mm tt")</td>
+                    <td>@reservation.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

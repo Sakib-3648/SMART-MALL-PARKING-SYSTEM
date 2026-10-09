@@ -1,0 +1,50 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Parking.ReserveModel
+
+@{
+    ViewData["Title"] = "Reserve Parking";
+}
+
+<div class="container mt-5">
+    <h1>Reserve Parking</h1>
+
+    <div class="mb-3">
+        <a asp-page="/Index" class="btn btn-secondary">
+            ← Back to Home
+        </a>
+    </div>
+
+    <p>Select a parking space and reservation time.</p>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <form method="post">
+    <div class="mb-3">
+    <label class="form-label">Parking Space</label>
+
+    <select class="form-select" name="parkingSpaceId">
+        @foreach (var space in Model.ParkingSpaces)
+        {
+            <option value="@space.ParkingSpaceId">
+                @space.SpaceNumber
+            </option>
+        }
+    </select>
+</div>
+<div class="mb-3">
+    <label class="form-label">Reservation Start</label>
+    <input type="datetime-local"
+           class="form-control"
+           name="reservationStart"
+           required />
+</div>
+<div class="mb-3">
+    <label class="form-label">Reservation End</label>
+    <input type="datetime-local"
+           class="form-control"
+           name="reservationEnd"
+           required />
+</div>
+<button type="submit" class="btn btn-success">
+    Reserve Parking
+</button>
+</form>
+</div>

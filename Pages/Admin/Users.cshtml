@@ -1,0 +1,39 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.UsersModel
+
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Manage Users</h1>
+
+    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-3">
+        ← Back to Admin Dashboard
+    </a>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Vehicle Number</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.VehicleNumber</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

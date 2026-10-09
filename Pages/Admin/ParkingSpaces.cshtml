@@ -1,0 +1,96 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.ParkingSpacesModel
+
+@{
+    ViewData["Title"] = "Manage Parking Spaces";
+}
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Manage Parking Spaces</h1>
+
+    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-3">
+        ← Back to Admin Dashboard
+    </a>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Space ID</th>
+                <th>Space Number</th>
+                <th>Current Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var space in Model.ParkingSpaces)
+            {
+                <tr>
+                    <td>@space.ParkingSpaceId</td>
+                    <td>@space.SpaceNumber</td>
+
+                    <td>
+                       @if (space.IsBlocked)
+{
+    <span class="text-secondary">
+        Blocked
+    </span>
+}
+else if (space.IsOccupied)
+{
+    <span class="text-danger">
+        Occupied
+    </span>
+}
+else if (Model.ReservedSpaceIds.Contains(space.ParkingSpaceId))
+{
+    <span class="text-warning">
+        Reserved
+    </span>
+}
+else
+{
+    <span class="text-success">
+        Available
+    </span>
+}
+                        
+                    </td>
+                    <td>
+    @if (space.IsBlocked)
+    {
+        <form method="post" asp-page-handler="Unblock">
+            <input type="hidden"
+                   name="parkingSpaceId"
+                   value="@space.ParkingSpaceId" />
+
+            <button type="submit" class="btn btn-success btn-sm">
+                Unblock
+            </button>
+        </form>
+    }
+    else if (!space.IsOccupied &&
+             !Model.ReservedSpaceIds.Contains(space.ParkingSpaceId))
+    {
+        <form method="post" asp-page-handler="Block">
+            <input type="hidden"
+                   name="parkingSpaceId"
+                   value="@space.ParkingSpaceId" />
+
+            <button type="submit" class="btn btn-danger btn-sm">
+                Block
+            </button>
+        </form>
+    }
+    else
+    {
+        <span class="text-muted">Not Available</span>
+    }
+</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

@@ -1,0 +1,25 @@
+# Visual Studio temporary files
+.vs/
+*.user
+*.suo
+
+# Build folders
+bin/
+obj/
+
+# Local development settings
+appsettings.Development.json
+
+# User Secrets
+secrets.json
+
+# Environment files
+.env
+.env.*
+
+# Local database files
+*.mdf
+*.ldf
+
+# Logs
+*.log

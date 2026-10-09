@@ -1,0 +1,64 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.VerifyEmailModel
+
+@{
+    ViewData["Title"] = "Verify Email";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <h2 class="text-center mb-4">
+                        Verify Your Email
+                    </h2>
+
+                    <p class="text-center">
+                        We sent a 6-digit verification code to your email.
+                    </p>
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success text-center">
+                            @TempData["SuccessMessage"]
+                        </div>
+                    }
+
+                    <form method="post">
+
+                        <div asp-validation-summary="All"
+                             class="text-danger mb-3">
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="VerificationCode"
+                                   class="form-label">
+                                Verification Code
+                            </label>
+
+                            <input asp-for="VerificationCode"
+                                   class="form-control"
+                                   maxlength="6"
+                                   placeholder="Enter 6-digit code" />
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary w-100">
+                            Verify Email
+                        </button>
+
+                    </form>
+                    <form method="post" asp-page-handler="Resend" class="mt-3">
+                        <button type="submit"
+                                class="btn btn-outline-secondary w-100">
+                            Resend Verification Code
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
