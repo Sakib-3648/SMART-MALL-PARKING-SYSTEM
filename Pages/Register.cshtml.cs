@@ -31,6 +31,10 @@ public class RegisterModel : PageModel
     public string Email { get; set; }
 
     [BindProperty]
+    [Required(ErrorMessage = "Password is required.")]
+    [RegularExpression(
+     @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
+     ErrorMessage = "Password must have at least 8 characters, including uppercase, lowercase, number, and special character.")]
     public string Password { get; set; }
 
     [BindProperty]

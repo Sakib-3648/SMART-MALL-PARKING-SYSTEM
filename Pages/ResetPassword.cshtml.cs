@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Identity;
-using SMART_MALL_PARKING_SYSTEM.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SMART_MALL_PARKING_SYSTEM.Data;
+using SMART_MALL_PARKING_SYSTEM.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace SMART_MALL_PARKING_SYSTEM.Pages
 {
@@ -22,6 +23,10 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
         public string Email { get; set; } = string.Empty;
 
         [BindProperty]
+        [Required(ErrorMessage = "New password is required.")]
+        [RegularExpression(
+    @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
+    ErrorMessage = "Password must have at least 8 characters, including uppercase, lowercase, number, and special character.")]
         public string NewPassword { get; set; } = string.Empty;
 
         [BindProperty]
@@ -61,6 +66,10 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
             }
 
             Email = resetEmail;
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
             if (NewPassword != ConfirmPassword)
             {
                 ViewData["ErrorMessage"] = "Passwords do not match.";
