@@ -1,0 +1,55 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.VerifyOtpModel
+
+@{
+    ViewData["Title"] = "Admin OTP Verification";
+}
+
+<div class="container mt-5">
+    <div class="card shadow p-4 mx-auto"
+         style="max-width: 450px;">
+
+        <h3 class="text-center mb-3">
+            Admin OTP Verification
+        </h3>
+
+        <p class="text-center">
+            Enter the 6-digit verification code
+            sent to your admin email.
+        </p>
+
+        <form method="post">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Verification Code
+                </label>
+
+                <input type="text"
+                       name="OtpCode"
+                       class="form-control"
+                       maxlength="6"
+                       inputmode="numeric"
+                       pattern="[0-9]{6}"
+                       placeholder="Enter 6-digit code"
+                       required />
+            </div>
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3">
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100">
+                Verify Code
+            </button>
+
+        </form>
+
+        <a href="/Admin/RequestOtp"
+           class="btn btn-link mt-3">
+            Request New Code
+        </a>
+
+    </div>
+</div>

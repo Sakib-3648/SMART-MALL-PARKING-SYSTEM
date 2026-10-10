@@ -1,0 +1,35 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.RequestOtpModel
+
+@{
+    ViewData["Title"] = "Admin Email Verification";
+}
+
+<div class="container mt-5">
+    <div class="card shadow p-4 mx-auto"
+         style="max-width: 450px;">
+
+        <h3 class="text-center mb-3">
+            Admin Email Verification
+        </h3>
+
+        <p class="text-center">
+            To access the Admin Login page,
+            you must verify your email address.
+        </p>
+
+        <form method="post">
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3">
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100">
+                Send Verification Code
+            </button>
+
+        </form>
+
+    </div>
+</div>

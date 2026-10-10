@@ -28,12 +28,53 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
 
         public string ErrorMessage { get; set; } = "";
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            var otpVerified =
+                HttpContext.Session.GetString("AdminOtpVerified");
+
+            var expiryText =
+                HttpContext.Session.GetString("AdminOtpVerifiedExpiry");
+
+            if (otpVerified != "true" ||
+                !DateTime.TryParse(
+                    expiryText,
+                    null,
+                    System.Globalization.DateTimeStyles.RoundtripKind,
+                    out var expiry) ||
+                DateTime.UtcNow >= expiry)
+            {
+                HttpContext.Session.Remove("AdminOtpVerified");
+                HttpContext.Session.Remove("AdminOtpVerifiedExpiry");
+
+                return RedirectToPage("/Admin/RequestOtp");
+            }
+
+            return Page();
         }
 
         public IActionResult OnPost()
         {
+            var otpVerified =
+    HttpContext.Session.GetString("AdminOtpVerified");
+
+            var expiryText =
+                HttpContext.Session.GetString("AdminOtpVerifiedExpiry");
+
+            if (otpVerified != "true" ||
+                !DateTime.TryParse(
+                    expiryText,
+                    null,
+                    System.Globalization.DateTimeStyles.RoundtripKind,
+                    out var expiry) ||
+                DateTime.UtcNow >= expiry)
+            {
+                HttpContext.Session.Remove("AdminOtpVerified");
+                HttpContext.Session.Remove("AdminOtpVerifiedExpiry");
+
+                return RedirectToPage("/Admin/RequestOtp");
+            }
+
             lock (LoginLock)
             {
                 // Check whether admin login is locked
@@ -60,6 +101,9 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                     Password == adminPassword)
                 {
                     failedAttempts = 0;
+                    // Clear OTP verification after successful login
+                    HttpContext.Session.Remove("AdminOtpVerified");
+                    HttpContext.Session.Remove("AdminOtpVerifiedExpiry");
 
                     HttpContext.Session.SetString("AdminLoggedIn", "true");
 

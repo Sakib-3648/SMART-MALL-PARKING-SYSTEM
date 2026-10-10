@@ -37,7 +37,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Services
                 EnableSsl = true
             };
 
-            var mailMessage = new MailMessage
+           using var mailMessage = new MailMessage
             {
                 From = new MailAddress(
                     senderEmail!,
@@ -55,6 +55,56 @@ This code is required to complete your registration.",
             };
 
             mailMessage.To.Add(recipientEmail);
+
+            await smtpClient.SendMailAsync(mailMessage);
+        }
+        public async Task SendAdminOtpAsync(
+    string adminEmail,
+    string verificationCode)
+        {
+            var senderEmail =
+                _configuration["EmailSettings:SenderEmail"];
+
+            var appPassword =
+                _configuration["EmailSettings:AppPassword"];
+
+            var smtpServer =
+                _configuration["EmailSettings:SmtpServer"];
+
+            var port =
+                int.Parse(_configuration["EmailSettings:Port"]!);
+
+            using var smtpClient = new SmtpClient(smtpServer, port)
+            {
+                Credentials = new NetworkCredential(
+                    senderEmail,
+                    appPassword),
+
+                EnableSsl = true
+            };
+
+            using var mailMessage = new MailMessage
+            {
+                From = new MailAddress(
+                    senderEmail!,
+                    "Smart Mall Parking"),
+
+                Subject = "Smart Mall Parking - Admin Verification Code",
+
+                Body = $@"Smart Mall Parking Admin Security
+
+Your admin verification code is: {verificationCode}
+
+This code expires in 2 minutes.
+
+If you did not request this code, please ignore this email.
+
+Do not share this code with anyone.",
+
+                IsBodyHtml = false
+            };
+
+            mailMessage.To.Add(adminEmail);
 
             await smtpClient.SendMailAsync(mailMessage);
         }
