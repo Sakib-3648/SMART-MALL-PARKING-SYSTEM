@@ -4,7 +4,14 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
 {
     public class LoginModel : PageModel
+
     {
+        private readonly IConfiguration _configuration;
+
+        public LoginModel(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
         [BindProperty]
         public string Email { get; set; } = "";
 
@@ -19,8 +26,13 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
 
         public IActionResult OnPost()
         {
-            if (Email == "admin@smartparking.com" &&
-                Password == "Admin123")
+            var adminEmail = _configuration["AdminSettings:Email"];
+            var adminPassword = _configuration["AdminSettings:Password"];
+
+            if (!string.IsNullOrEmpty(adminEmail) &&
+                !string.IsNullOrEmpty(adminPassword) &&
+                Email == adminEmail &&
+                Password == adminPassword)
             {
                 HttpContext.Session.SetString("AdminLoggedIn", "true");
 
