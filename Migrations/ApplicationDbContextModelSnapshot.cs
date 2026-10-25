@@ -215,6 +215,63 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.VehicleEntry", b =>
+                {
+                    b.Property<int>("VehicleEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleEntryId"));
+
+                    b.Property<DateTime>("EntryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExitTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Fee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsSpaceAssigned")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ParkingReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ParkingSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ParkingSpaceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VehicleNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("VehicleEntryId");
+
+                    b.HasIndex("ParkingReservationId");
+
+                    b.HasIndex("ParkingSessionId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VehicleNumber")
+                        .IsUnique()
+                        .HasFilter("[ExitTime] IS NULL");
+
+                    b.ToTable("VehicleEntries");
+                });
+
             modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.ParkingReservation", b =>
                 {
                     b.HasOne("SMART_MALL_PARKING_SYSTEM.Models.ParkingSpace", "ParkingSpace")
@@ -249,6 +306,30 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         .IsRequired();
 
                     b.Navigation("ParkingSpace");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.VehicleEntry", b =>
+                {
+                    b.HasOne("SMART_MALL_PARKING_SYSTEM.Models.ParkingReservation", "ParkingReservation")
+                        .WithMany()
+                        .HasForeignKey("ParkingReservationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SMART_MALL_PARKING_SYSTEM.Models.ParkingSession", "ParkingSession")
+                        .WithMany()
+                        .HasForeignKey("ParkingSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SMART_MALL_PARKING_SYSTEM.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParkingReservation");
+
+                    b.Navigation("ParkingSession");
 
                     b.Navigation("User");
                 });

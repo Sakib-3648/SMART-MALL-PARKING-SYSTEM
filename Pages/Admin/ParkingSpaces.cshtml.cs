@@ -69,6 +69,54 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             return RedirectToPage();
 
         }
+
+        public async Task<IActionResult> OnPostEmergencyBlockAsync(
+            int parkingSpaceId)
+        {
+            if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
+            {
+                return RedirectToPage("/Admin/Login");
+            }
+
+            var space = await _context.ParkingSpaces
+                .FirstOrDefaultAsync(p =>
+                    p.ParkingSpaceId == parkingSpaceId);
+
+            if (space == null)
+            {
+                TempData["ErrorMessage"] = "Parking space not found.";
+                return RedirectToPage();
+            }
+
+            // Emergency block is allowed for reserved spaces,
+            // but never for spaces with an active vehicle.
+            if (space.IsOccupied)
+            {
+                TempData["ErrorMessage"] =
+                    "Cannot block an occupied space. Clear the vehicle first.";
+
+                return RedirectToPage();
+            }
+
+            if (space.IsBlocked)
+            {
+                TempData["ErrorMessage"] =
+                    "This parking space is already blocked.";
+
+                return RedirectToPage();
+            }
+
+            space.IsBlocked = true;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Parking space {space.SpaceNumber} emergency blocked. " +
+                "Existing reservations have been preserved.";
+
+            return RedirectToPage();
+        }
+
         public async Task<IActionResult> OnPostUnblockAsync(int parkingSpaceId)
         {
             if (HttpContext.Session.GetString("AdminLoggedIn") != "true")

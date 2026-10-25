@@ -6,142 +6,290 @@
 }
 
 <div class="container mt-4">
-
     <h2 class="mb-4">Parking Sessions</h2>
 
-    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-4">
+    <a asp-page="/Admin/Dashboard"
+       class="btn btn-secondary mb-4">
         Back to Admin Dashboard
     </a>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
     <h3>Active Parking Sessions</h3>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>User ID</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Vehicle Number</th>
-                <th>Parking Space</th>
-                <th>Start Time</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var session in Model.ActiveSessions)
-            {
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
                 <tr>
-                    <td>@session.UserId</td>
-                    <td>@session.User?.FullName</td>
-                    <td>@session.User?.Email</td>
-                    <td>@session.User?.VehicleNumber</td>
-                    <td>@session.ParkingSpace?.SpaceNumber</td>
-                    <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
-                    <td>@session.Status</td>
-                    <td>
-                        <form method="post" asp-page-handler="ForceEnd" id="clearParkingForm">
-                            <input type="hidden"
-                                   name="parkingSessionId"
-                                   value="@session.ParkingSessionId" />
-
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Vehicle Number</th>
+                    <th>Parking Space</th>
+                    <th>Start Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var session in Model.ActiveSessions)
+                {
+                    <tr>
+                        <td>@session.UserId</td>
+                        <td>@session.User?.FullName</td>
+                        <td>@session.User?.Email</td>
+                        <td>@session.User?.VehicleNumber</td>
+                        <td>@session.ParkingSpace?.SpaceNumber</td>
+                        <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>
+                            <span class="badge bg-success">
+                                @session.Status
+                            </span>
+                        </td>
+                        <td>
                             <button type="button"
                                     class="btn btn-danger btn-sm"
                                     data-bs-toggle="modal"
                                     data-bs-target="#clearParkingModal"
-                                    data-session-id="@session.ParkingSessionId">
+                                    data-handler="ForceEnd"
+                                    data-id="@session.ParkingSessionId"
+                                    data-vehicle="@session.User?.VehicleNumber">
                                 Clear Active Parking
                             </button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var entry in Model.GuestActiveEntries)
+                {
+                    <tr>
+                        <td>Guest</td>
+                        <td>Unregistered</td>
+                        <td>N/A</td>
+                        <td>@entry.VehicleNumber</td>
+                        <td>@Model.GetSpaceNumber(entry.ParkingSpaceId)</td>
+                        <td>@entry.EntryTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>
+                            <span class="badge bg-success">
+                                Inside
+                            </span>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#clearParkingModal"
+                                    data-handler="ForceGuestExit"
+                                    data-id="@entry.VehicleEntryId"
+                                    data-vehicle="@entry.VehicleNumber">
+                                Clear Guest Parking
+                            </button>
+                        </td>
+                    </tr>
+                }
+
+                @if (!Model.ActiveSessions.Any() &&
+                     !Model.GuestActiveEntries.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            No active parking sessions.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
     <h3 class="mt-5">Previous Parking History</h3>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>User ID</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Vehicle Number</th>
-                <th>Parking Space</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Fee</th>
-                <th>Status</th>
-               
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var session in Model.ParkingHistory)
-            {
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
                 <tr>
-                    <td>@session.UserId</td>
-                    <td>@session.User?.FullName</td>
-                    <td>@session.User?.Email</td>
-                    <td>@session.User?.VehicleNumber</td>
-                    <td>@session.ParkingSpace?.SpaceNumber</td>
-                    <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
-                    <td>@session.EndTime?.ToString("dd/MM/yyyy hh:mm tt")</td>
-                    <td>RM @session.Fee.ToString("0.00")</td>
-                    <td>@session.Status</td>
-                   
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Vehicle Number</th>
+                    <th>Parking Space</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Fee</th>
+                    <th>Status</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-    <div class="modal fade" id="clearParkingModal" tabindex="-1"
-         aria-labelledby="clearParkingModalLabel" aria-hidden="true">
+            </thead>
+            <tbody>
+                @foreach (var session in Model.ParkingHistory)
+                {
+                    <tr>
+                        <td>@session.UserId</td>
+                        <td>@session.User?.FullName</td>
+                        <td>@session.User?.Email</td>
+                        <td>@session.User?.VehicleNumber</td>
+                        <td>@session.ParkingSpace?.SpaceNumber</td>
+                        <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>@session.EndTime?.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>RM @session.Fee.ToString("0.00")</td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                @session.Status
+                            </span>
+                        </td>
+                    </tr>
+                }
 
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+                @foreach (var entry in Model.GuestParkingHistory)
+                {
+                    <tr>
+                        <td>Guest</td>
+                        <td>Unregistered</td>
+                        <td>N/A</td>
+                        <td>@entry.VehicleNumber</td>
+                        <td>@Model.GetSpaceNumber(entry.ParkingSpaceId)</td>
+                        <td>@entry.EntryTime.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>@entry.ExitTime?.ToString("dd/MM/yyyy hh:mm tt")</td>
+                        <td>
+                            RM @Model.GetGuestFee(entry).ToString("0.00")
+                            @if (!entry.Fee.HasValue)
+                            {
+                                <small class="text-muted">(Estimated)</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                Exited
+                            </span>
+                        </td>
+                    </tr>
+                }
 
-                <div class="modal-header">
-                    <h5 class="modal-title" id="clearParkingModalLabel">
-                        Confirm Clear Parking
-                    </h5>
+                @if (!Model.ParkingHistory.Any() &&
+                     !Model.GuestParkingHistory.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            No previous parking history.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
-                    <button type="button" class="btn-close"
-                            data-bs-dismiss="modal"></button>
-                </div>
+<!-- Confirmation modal -->
+<div class="modal fade"
+     id="clearParkingModal"
+     tabindex="-1"
+     aria-labelledby="clearParkingModalLabel"
+     aria-hidden="true">
 
-                <div class="modal-body">
-                    Are you sure you want to clear this active parking session?
-                </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
 
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Cancel
+            <div class="modal-header">
+                <h5 class="modal-title" id="clearParkingModalLabel">
+                    Confirm Clear Parking
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                Are you sure you want to clear parking for
+                <strong id="selectedVehicle"></strong>?
+
+                <p class="text-danger mt-2 mb-0">
+                    This will end the parking record, calculate the fee,
+                    and release the parking space.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form id="forceEndForm"
+                      method="post"
+                      asp-page-handler="ForceEnd">
+
+                    <input type="hidden"
+                           name="parkingSessionId"
+                           id="selectedSessionId" />
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        Confirm Clear
                     </button>
+                </form>
 
-                    <button type="button"
-                            class="btn btn-danger"
-                            onclick="document.getElementById('clearParkingForm').submit();">
-                        Clear Parking
+                <form id="forceGuestExitForm"
+                      method="post"
+                      asp-page-handler="ForceGuestExit"
+                      style="display:none;">
+
+                    <input type="hidden"
+                           name="vehicleEntryId"
+                           id="selectedVehicleEntryId" />
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        Confirm Guest Exit
                     </button>
-                </div>
-
+                </form>
             </div>
         </div>
     </div>
 </div>
+
 <script>
-    var clearParkingModal = document.getElementById('clearParkingModal');
+    document.getElementById('clearParkingModal')
+        .addEventListener('show.bs.modal', function (event) {
 
-    clearParkingModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var sessionId = button.getAttribute('data-session-id');
+            const button = event.relatedTarget;
+            const handler = button.getAttribute('data-handler');
+            const recordId = button.getAttribute('data-id');
+            const vehicle = button.getAttribute('data-vehicle');
 
-        var form = document.getElementById('clearParkingForm');
-        var input = form.querySelector('input[name="parkingSessionId"]');
+            document.getElementById('selectedVehicle')
+                .textContent = vehicle || 'this vehicle';
 
-        input.value = sessionId;
-    });
+            const sessionForm =
+                document.getElementById('forceEndForm');
+
+            const guestForm =
+                document.getElementById('forceGuestExitForm');
+
+            if (handler === 'ForceGuestExit') {
+                sessionForm.style.display = 'none';
+                guestForm.style.display = 'block';
+
+                document.getElementById('selectedVehicleEntryId')
+                    .value = recordId;
+            } else {
+                sessionForm.style.display = 'block';
+                guestForm.style.display = 'none';
+
+                document.getElementById('selectedSessionId')
+                    .value = recordId;
+            }
+        });
 </script>

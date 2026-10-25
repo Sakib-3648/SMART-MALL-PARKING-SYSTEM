@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using SMART_MALL_PARKING_SYSTEM.Models;
 
 namespace SMART_MALL_PARKING_SYSTEM.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
@@ -15,15 +17,47 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
         public DbSet<ParkingSession> ParkingSessions { get; set; }
         public DbSet<ParkingReservation> ParkingReservations { get; set; }
 
+        // New table for automatic vehicle entry and exit
+        public DbSet<VehicleEntry> VehicleEntries { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<ParkingSession>()
-    .HasOne(p => p.User)
-    .WithMany()
-    .HasForeignKey(p => p.UserId)
-    .OnDelete(DeleteBehavior.Restrict);
 
+            // Existing parking session relationship
+            modelBuilder.Entity<ParkingSession>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Vehicle entry relationships
+            modelBuilder.Entity<VehicleEntry>()
+                .HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VehicleEntry>()
+                .HasOne(v => v.ParkingReservation)
+                .WithMany()
+                .HasForeignKey(v => v.ParkingReservationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VehicleEntry>()
+                .HasOne(v => v.ParkingSession)
+                .WithMany()
+                .HasForeignKey(v => v.ParkingSessionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent the same vehicle from having
+            // multiple active entry records
+            modelBuilder.Entity<VehicleEntry>()
+                .HasIndex(v => v.VehicleNumber)
+                .IsUnique()
+                .HasFilter("[ExitTime] IS NULL");
+
+            // Existing parking space seed data
             modelBuilder.Entity<ParkingSpace>().HasData(
                 new ParkingSpace { ParkingSpaceId = 1, SpaceNumber = "P01", IsOccupied = false },
                 new ParkingSpace { ParkingSpaceId = 2, SpaceNumber = "P02", IsOccupied = false },

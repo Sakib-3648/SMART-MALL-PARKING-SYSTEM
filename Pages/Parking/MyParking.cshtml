@@ -48,6 +48,13 @@
                     RM @Model.CurrentFee.ToString("0.00")
                 </p>
 
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-warning">
+                        @TempData["ErrorMessage"]
+                    </div>
+                }
+
                 <form method="post" asp-page-handler="EndParking">
                     <button type="submit" class="btn btn-danger">
                         End Parking

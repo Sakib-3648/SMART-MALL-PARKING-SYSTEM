@@ -1,6 +1,7 @@
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using SMART_MALL_PARKING_SYSTEM.Data;
 
 namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
@@ -21,19 +22,26 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
         public int ReservedSpaces { get; set; }
         public int BlockedSpaces { get; set; }
 
+        public int VehiclesInside { get; set; }
+        public int TotalVehicleEntries { get; set; }
+        public int TotalVehicleExits { get; set; }
+        public int VehiclesWithoutSpace { get; set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
             if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
             {
                 return RedirectToPage("/Admin/Login");
             }
+
             TotalUsers = await _context.Users.CountAsync();
             TotalSpaces = await _context.ParkingSpaces.CountAsync();
 
             OccupiedSpaces = await _context.ParkingSpaces
                 .CountAsync(p => p.IsOccupied);
+
             BlockedSpaces = await _context.ParkingSpaces
-    .CountAsync(p => p.IsBlocked);
+                .CountAsync(p => p.IsBlocked);
 
             var now = DateTime.Now;
 
@@ -56,8 +64,22 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                     !p.IsOccupied &&
                     !p.IsBlocked &&
                     !reservedSpaceIds.Contains(p.ParkingSpaceId));
+
+            VehiclesInside = await _context.VehicleEntries
+                .CountAsync(v => v.ExitTime == null);
+
+            TotalVehicleEntries = await _context.VehicleEntries
+                .CountAsync();
+
+            TotalVehicleExits = await _context.VehicleEntries
+                .CountAsync(v => v.ExitTime != null);
+
+            VehiclesWithoutSpace = await _context.VehicleEntries
+                .CountAsync(v =>
+                    v.ExitTime == null &&
+                    !v.IsSpaceAssigned);
+
             return Page();
         }
-        
     }
 }

@@ -73,6 +73,21 @@ public class MyParkingModel : PageModel
             return RedirectToPage("/Parking/Availability");
         }
 
+        var gateControlled = await _context.VehicleEntries
+            .AnyAsync(v =>
+                v.ParkingSessionId == activeSession.ParkingSessionId &&
+                v.ExitTime == null);
+
+        if (gateControlled)
+        {
+            TempData["ErrorMessage"] =
+                "Your vehicle is recorded inside the parking area. " +
+                "Parking can only be ended through the exit gate. " +
+                "Please contact the administrator if the camera fails.";
+
+            return RedirectToPage("/Parking/MyParking");
+        }
+
         var endTime = DateTime.Now;
 
         var duration = endTime - activeSession.StartTime;

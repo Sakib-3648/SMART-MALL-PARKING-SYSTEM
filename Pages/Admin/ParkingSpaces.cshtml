@@ -9,88 +9,224 @@
 
     <h1 class="mb-4">Manage Parking Spaces</h1>
 
-    <a asp-page="/Admin/Dashboard" class="btn btn-secondary mb-3">
+    <a asp-page="/Admin/Dashboard"
+       class="btn btn-secondary mb-3">
         ← Back to Admin Dashboard
     </a>
 
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Space ID</th>
-                <th>Space Number</th>
-                <th>Current Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
 
-        <tbody>
-            @foreach (var space in Model.ParkingSpaces)
-            {
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="alert alert-info">
+        <strong>Emergency Block:</strong>
+        Use this option when a reserved parking space becomes
+        unavailable due to maintenance or another emergency.
+        The customer's reservation will be preserved.
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+
+            <thead class="table-dark">
                 <tr>
-                    <td>@space.ParkingSpaceId</td>
-                    <td>@space.SpaceNumber</td>
-
-                    <td>
-                       @if (space.IsBlocked)
-{
-    <span class="text-secondary">
-        Blocked
-    </span>
-}
-else if (space.IsOccupied)
-{
-    <span class="text-danger">
-        Occupied
-    </span>
-}
-else if (Model.ReservedSpaceIds.Contains(space.ParkingSpaceId))
-{
-    <span class="text-warning">
-        Reserved
-    </span>
-}
-else
-{
-    <span class="text-success">
-        Available
-    </span>
-}
-                        
-                    </td>
-                    <td>
-    @if (space.IsBlocked)
-    {
-        <form method="post" asp-page-handler="Unblock">
-            <input type="hidden"
-                   name="parkingSpaceId"
-                   value="@space.ParkingSpaceId" />
-
-            <button type="submit" class="btn btn-success btn-sm">
-                Unblock
-            </button>
-        </form>
-    }
-    else if (!space.IsOccupied &&
-             !Model.ReservedSpaceIds.Contains(space.ParkingSpaceId))
-    {
-        <form method="post" asp-page-handler="Block">
-            <input type="hidden"
-                   name="parkingSpaceId"
-                   value="@space.ParkingSpaceId" />
-
-            <button type="submit" class="btn btn-danger btn-sm">
-                Block
-            </button>
-        </form>
-    }
-    else
-    {
-        <span class="text-muted">Not Available</span>
-    }
-</td>
+                    <th>Space ID</th>
+                    <th>Space Number</th>
+                    <th>Current Status</th>
+                    <th>Action</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
 
+            <tbody>
+                @foreach (var space in Model.ParkingSpaces)
+                {
+                    bool isReserved =
+                        Model.ReservedSpaceIds.Contains(
+                            space.ParkingSpaceId);
+
+                    <tr>
+                        <td>@space.ParkingSpaceId</td>
+
+                        <td>
+                            <strong>@space.SpaceNumber</strong>
+                        </td>
+
+                        <td>
+                            @if (space.IsBlocked)
+                            {
+                                <span class="badge bg-secondary">
+                                    Blocked
+                                </span>
+
+                                @if (isReserved)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        Reservation Exists
+                                    </span>
+                                }
+                            }
+                            else if (space.IsOccupied)
+                            {
+                                <span class="badge bg-danger">
+                                    Occupied
+                                </span>
+                            }
+                            else if (isReserved)
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Reserved
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">
+                                    Available
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (space.IsBlocked)
+                            {
+                                <form method="post"
+                                      asp-page-handler="Unblock">
+
+                                    <input type="hidden"
+                                           name="parkingSpaceId"
+                                           value="@space.ParkingSpaceId" />
+
+                                    <button type="submit"
+                                            class="btn btn-success btn-sm">
+                                        Unblock
+                                    </button>
+                                </form>
+                            }
+                            else if (space.IsOccupied)
+                            {
+                                <span class="text-muted">
+                                    Vehicle Occupied
+                                </span>
+                            }
+                            else if (isReserved)
+                            {
+                                <button type="button"
+                                        class="btn btn-warning btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#emergencyBlockModal"
+                                        data-space-id="@space.ParkingSpaceId"
+                                        data-space-number="@space.SpaceNumber">
+                                    Emergency Block
+                                </button>
+                            }
+                            else
+                            {
+                                <form method="post"
+                                      asp-page-handler="Block">
+
+                                    <input type="hidden"
+                                           name="parkingSpaceId"
+                                           value="@space.ParkingSpaceId" />
+
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm">
+                                        Block
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
 </div>
+
+<!-- Emergency Block Confirmation Modal -->
+<div class="modal fade"
+     id="emergencyBlockModal"
+     tabindex="-1"
+     aria-labelledby="emergencyBlockModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title"
+                    id="emergencyBlockModalLabel">
+                    Confirm Emergency Block
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                Are you sure you want to emergency block
+                <strong id="selectedSpaceNumber"></strong>?
+
+                <p class="text-warning mt-3 mb-0">
+                    The existing reservation will remain in the
+                    database. The gate must assign an alternative
+                    parking space when the vehicle arrives.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form method="post"
+                      asp-page-handler="EmergencyBlock">
+
+                    <input type="hidden"
+                           id="selectedParkingSpaceId"
+                           name="parkingSpaceId" />
+
+                    <button type="submit"
+                            class="btn btn-warning">
+                        Confirm Emergency Block
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('emergencyBlockModal')
+        .addEventListener('show.bs.modal', function (event) {
+
+            const button = event.relatedTarget;
+
+            const spaceId =
+                button.getAttribute('data-space-id');
+
+            const spaceNumber =
+                button.getAttribute('data-space-number');
+
+            document.getElementById('selectedParkingSpaceId')
+                .value = spaceId;
+
+            document.getElementById('selectedSpaceNumber')
+                .textContent = spaceNumber;
+        });
+</script>

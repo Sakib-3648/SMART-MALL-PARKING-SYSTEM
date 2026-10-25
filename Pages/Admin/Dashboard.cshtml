@@ -8,12 +8,17 @@
 <div class="container mt-5">
 
     <h1 class="mb-4">Admin Dashboard</h1>
+
     <div class="mb-3">
         <a asp-page="/Admin/Logout" class="btn btn-danger">
             Admin Logout
         </a>
     </div>
+
+    <h3 class="mb-3">Parking Overview</h3>
+
     <div class="row">
+
         <div class="col-md-3 mb-3">
             <div class="card text-center border-warning">
                 <div class="card-body">
@@ -22,6 +27,7 @@
                 </div>
             </div>
         </div>
+
         <div class="col-md-3 mb-3">
             <div class="card text-center border-primary">
                 <div class="card-body">
@@ -57,6 +63,7 @@
                 </div>
             </div>
         </div>
+
         <div class="col-md-3 mb-3">
             <div class="card text-center border-secondary">
                 <div class="card-body">
@@ -65,21 +72,90 @@
                 </div>
             </div>
         </div>
-        <div class="mt-4">
-            <a asp-page="/Admin/Users" class="btn btn-primary">
-                Manage Users
-            </a>
 
-            <a asp-page="/Admin/ParkingSpaces" class="btn btn-success">
-                Manage Parking Spaces
-            </a>
-            <a asp-page="/Admin/Reservations" class="btn btn-warning">
-                Manage Reservations
-            </a>
-            <a asp-page="/Admin/ParkingSessions" class="btn btn-info">
-                Parking Sessions
-            </a>
+    </div>
+
+    <hr class="my-4" />
+
+    <h3 class="mb-3">Vehicle Entry &amp; Exit Tracking</h3>
+
+    <div class="row">
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h5>Vehicles Inside</h5>
+                    <h2>@Model.VehiclesInside</h2>
+                </div>
+            </div>
         </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5>Total Vehicle Entries</h5>
+                    <h2>@Model.TotalVehicleEntries</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h5>Total Vehicle Exits</h5>
+                    <h2>@Model.TotalVehicleExits</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h5>Inside Without Space</h5>
+                    <h2>@Model.VehiclesWithoutSpace</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="alert alert-info mt-2">
+        Vehicle statistics are based on recorded gate entries
+        and exits. Automatic vehicle detection will be
+        connected in a later development stage.
+    </div>
+
+    <hr class="my-4" />
+
+    <h3 class="mb-3">Admin Management</h3>
+
+    <div class="mt-3">
+
+        <a asp-page="/Admin/Users"
+           class="btn btn-primary mb-2">
+            Manage Users
+        </a>
+
+        <a asp-page="/Admin/ParkingSpaces"
+           class="btn btn-success mb-2">
+            Manage Parking Spaces
+        </a>
+
+        <a asp-page="/Admin/Reservations"
+           class="btn btn-warning mb-2">
+            Manage Reservations
+        </a>
+
+        <a asp-page="/Admin/ParkingSessions"
+           class="btn btn-info mb-2">
+            Parking Sessions
+        </a>
+
+        <a asp-page="/Admin/VehicleGate"
+           class="btn btn-dark mb-2">
+            Vehicle Entry / Exit Gate
+        </a>
+
     </div>
 
 </div>

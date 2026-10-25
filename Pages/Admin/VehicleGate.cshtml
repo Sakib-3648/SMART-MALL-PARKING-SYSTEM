@@ -1,0 +1,210 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.VehicleGateModel
+
+<div class="card mb-4 border-dark shadow">
+    <div class="card-header bg-dark text-white text-center">
+        <h4 class="mb-0">SMART MALL PARKING - ENTRANCE DISPLAY</h4>
+    </div>
+
+    <div class="card-body text-center"
+         style="background-color:#101c2c; color:white;">
+
+        <h5>DETECTED VEHICLE NUMBER</h5>
+
+        <h1 class="fw-bold text-info">
+            @Model.DisplayPlate
+        </h1>
+
+        <hr class="border-light" />
+
+        <h5>ASSIGNED PARKING SPACE</h5>
+
+        <h1 class="display-2 fw-bold text-success">
+            @Model.DisplaySpace
+        </h1>
+
+        <h4 class="mt-3">
+            @Model.DisplayMessage
+        </h4>
+
+        @if (Model.DisplayFee != "---")
+        {
+            <div class="mt-4 p-3 rounded"
+                 style="background-color:#193b38;">
+                <h5 style="color:#a8e5c5;">
+                    TOTAL PARKING FEE
+                </h5>
+
+                <h1 class="display-4 fw-bold"
+                    style="color:#79f2ac;">
+                    @Model.DisplayFee
+                </h1>
+
+                <p class="mb-0 text-white">
+                    Payment not yet collected
+                </p>
+            </div>
+        }
+
+
+    </div>
+</div>
+
+@{
+    ViewData["Title"] = "Vehicle Gate";
+}
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Vehicle Entry &amp; Exit Gate</h1>
+
+    <a asp-page="/Admin/Dashboard"
+       class="btn btn-secondary mb-4">
+        ← Back to Dashboard
+    </a>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="row mb-4">
+
+        <div class="col-md-6 mb-3">
+            <div class="card border-primary text-center">
+                <div class="card-body">
+                    <h5>Vehicles Inside</h5>
+                    <h2>@Model.VehiclesInside</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card border-success text-center">
+                <div class="card-body">
+                    <h5>Remaining Gate Capacity</h5>
+                    <h2>@Model.RemainingCapacity</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <h4 class="mb-3">Simulated Gate</h4>
+
+            <p class="text-muted">
+                Enter a vehicle number to simulate
+                entry or exit.
+            </p>
+
+            <form method="post">
+
+                <div class="mb-3">
+                    <label asp-for="VehicleNumber"
+                           class="form-label">
+                        Vehicle Number
+                    </label>
+
+                    <input asp-for="VehicleNumber"
+                           class="form-control"
+                           placeholder="Example: ABC1234"
+                           maxlength="20"
+                           required />
+
+                    <span asp-validation-for="VehicleNumber"
+                          class="text-danger"></span>
+                </div>
+
+                <button type="submit"
+                        asp-page-handler="Entry"
+                        class="btn btn-success me-2">
+                    Simulate Entry
+                </button>
+
+                <button type="submit"
+                        asp-page-handler="Exit"
+                        class="btn btn-danger">
+                    Simulate Exit
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+    <h4 class="mb-3">Recent Vehicle Records</h4>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+
+            <thead class="table-dark">
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Status</th>
+                    <th>Space Assigned</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var entry in Model.RecentEntries)
+                {
+                    <tr>
+                        <td>@entry.VehicleNumber</td>
+
+                        <td>
+                            @entry.EntryTime.ToString(
+                                "dd/MM/yyyy HH:mm")
+                        </td>
+
+                        <td>
+                            @(entry.ExitTime.HasValue
+                                ? entry.ExitTime.Value.ToString(
+                                    "dd/MM/yyyy HH:mm")
+                                : "-")
+                        </td>
+
+                        <td>@entry.Status</td>
+
+                        <td>
+                            @(entry.IsSpaceAssigned
+                                ? "Yes"
+                                : "No")
+                        </td>
+                    </tr>
+                }
+
+                @if (Model.RecentEntries.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5"
+                            class="text-center text-muted">
+                            No vehicle records yet.
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
