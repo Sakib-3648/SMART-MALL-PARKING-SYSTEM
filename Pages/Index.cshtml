@@ -2,17 +2,11 @@
 @model IndexModel
 
 @{
-    ViewData["Title"] = "Smart Mall Parking";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center"
-     style="font-size: 20px;">
-    <h1>Smart Mall Parking System</h1>
-    
+<div class="text-center" style="font-size: 20px;">
 
-    <p>
-        Welcome to the Smart Mall Parking System
-    </p>
     @if (Model.UserId != null)
     {
         <p class="text-success">
@@ -20,8 +14,10 @@
         </p>
 
         <p>
-            Vehicle Number: <strong>@Model.VehicleNumber</strong>
+            Vehicle Number:
+            <strong>@Model.VehicleNumber</strong>
         </p>
+
         <p>
             Current Parking:
             <strong>
@@ -34,14 +30,15 @@
                     @Model.CurrentParkingStatus
                 }
             </strong>
-
         </p>
+
         @if (Model.CurrentParkingStatus == "Active")
         {
             <p>
                 Parking Duration:
                 <strong>@Model.ParkingDuration</strong>
             </p>
+
             <p>
                 Estimated Fee:
                 <strong>RM @Model.CurrentFee.ToString("0.00")</strong>
@@ -51,21 +48,49 @@
 
     @if (Model.UserId == null)
     {
-        <div>
-            <a class="btn btn-primary" href="/Login">Login</a>
-            <a class="btn btn-success" href="/Register">Register</a>
-           
+        <div class="mt-3">
+            <a class="btn btn-primary m-1" href="/Login">
+                Login
+            </a>
+
+            <a class="btn btn-success m-1" href="/Register">
+                Register
+            </a>
         </div>
     }
     else
     {
-        <div>
-            <a class="btn btn-primary" href="/Parking/Availability">Find Parking</a>
-            <a class="btn btn-warning" href="/Parking/Reserve">Reserve Parking</a>
-            <a class="btn btn-info" href="/Parking/MyReservation">My Reservations</a>
-            <a class="btn btn-success" href="/Parking/MyParking">My Parking</a>
-            <a class="btn btn-secondary" href="/Parking/History">Parking History</a>
-            <a class="btn btn-danger" href="/Logout">Logout</a>
+        <div class="mt-3">
+            <a class="btn btn-primary m-1"
+               href="/Parking/Availability">
+                Find Parking
+            </a>
+
+            <a class="btn btn-warning m-1"
+               href="/Parking/Reserve">
+                Reserve Parking
+            </a>
+
+            <a class="btn btn-info m-1"
+               href="/Parking/MyReservation">
+                My Reservations
+            </a>
+
+            <a class="btn btn-success m-1"
+               href="/Parking/MyParking">
+                My Parking
+            </a>
+
+            <a class="btn btn-secondary m-1"
+               href="/Parking/History">
+                Parking History
+            </a>
+
+            <a class="btn btn-danger m-1"
+               href="/Logout">
+                Logout
+            </a>
         </div>
     }
+
 </div>

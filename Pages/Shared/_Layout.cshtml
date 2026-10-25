@@ -1,26 +1,69 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SMART_MALL_PARKING_SYSTEM</title>
+
+    <title>@ViewData["Title"] - Smart Mall Parking and Management System</title>
+
     <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SMART_MALL_PARKING_SYSTEM.styles.css" asp-append-version="true" />
+
+    <style>
+            .mall-header {
+                text-align: center;
+                background: linear-gradient(135deg, #12345a, #24629a);
+                color: white;
+                padding: 30px 15px;
+                margin-bottom: 25px;
+                border-radius: 0 0 12px 12px;
+            }
+
+            .mall-header h1 {
+                font-size: clamp(25px, 3.5vw, 38px);
+                font-weight: 700;
+                margin-bottom: 10px;
+            }
+
+            .mall-header p {
+                font-size: 18px;
+                font-style: italic;
+                margin-bottom: 0;
+                color: #e5eaf0;
+            }
+
+            .mall-footer {
+                padding: 18px 10px;
+                text-align: center;
+                font-size: 14px;
+            }
+    </style>
 </head>
+
 <body>
-    
-    }
+
+    <header class="mall-header">
+        <h1>Smart Mall Parking and Management System</h1>
+        <p>Summit USJ1, Subang Jaya, Malaysia</p>
+    </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top footer text-muted mall-footer">
         <div class="container">
-            &copy; 2026 - SMART_MALL_PARKING_SYSTEM - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2026 - Smart Mall Parking and Management System
+            <div>
+                <em>Summit USJ1, Subang Jaya, Malaysia</em>
+            </div>
+            <a asp-area="" asp-page="/Privacy">Privacy</a>
         </div>
     </footer>
 
@@ -29,5 +72,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>
