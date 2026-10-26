@@ -173,23 +173,32 @@
                             <td>
                                 @if (reservation.Status == "Reserved")
                                 {
-                                    @if (DateTime.Now >= reservation.ReservationStart &&
-                                         DateTime.Now <= reservation.ReservationEnd)
-                                    {
-                                        <form method="post"
-                                              asp-page-handler="StartParking"
-                                              class="mb-1">
+                                    
+@*
+    Manual Start Parking is hidden.
 
-                                            <input type="hidden"
-                                                   name="reservationId"
-                                                   value="@reservation.ParkingReservationId" />
+    The Vehicle Gate automatically processes
+    reservations when the vehicle enters.
 
-                                            <button type="submit"
-                                                    class="btn btn-success btn-sm">
-                                                Start Parking
-                                            </button>
-                                        </form>
-                                    }
+    @if (DateTime.Now >= reservation.ReservationStart &&
+         DateTime.Now <= reservation.ReservationEnd)
+    {
+        <form method="post"
+              asp-page-handler="StartParking"
+              class="mb-1">
+
+            <input type="hidden"
+                   name="reservationId"
+                   value="@reservation.ParkingReservationId" />
+
+            <button type="submit"
+                    class="btn btn-success btn-sm">
+                Start Parking
+            </button>
+        </form>
+    }
+*@
+
 
                                     <form method="post"
                                           asp-page-handler="Cancel">

@@ -21,7 +21,7 @@
 </div>
 
     <h1 class="text-center mb-4">
-        🅿️ Smart Mall Parking
+        SUMMIT USJ Mall Parking
     </h1>
 
     <h3 class="text-center mb-4">
@@ -86,15 +86,22 @@
                                 ● Available
                             </p>
 
-                            <form method="post" asp-page-handler="Select">
-                                <input type="hidden"
-                                       name="parkingSpaceId"
-                                       value="@space.ParkingSpaceId" />
+                            
+@*
+    Manual parking selection disabled.
+    Parking spaces are assigned through the Vehicle Gate.
 
-                                <button type="submit" class="btn btn-success">
-                                    Select
-                                </button>
-                            </form>
+    <form method="post" asp-page-handler="Select">
+        <input type="hidden"
+               name="parkingSpaceId"
+               value="@space.ParkingSpaceId" />
+
+        <button type="submit" class="btn btn-success">
+            Select
+        </button>
+    </form>
+*@
+
                         }
 
                     </div>

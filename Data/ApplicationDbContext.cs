@@ -17,13 +17,23 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
         public DbSet<ParkingSession> ParkingSessions { get; set; }
         public DbSet<ParkingReservation> ParkingReservations { get; set; }
 
-        // New table for automatic vehicle entry and exit
+        // Automatic vehicle entry and exit
         public DbSet<VehicleEntry> VehicleEntries { get; set; }
+
+        // FPX and Debit/Credit Card payments
+        public DbSet<ParkingPayment> ParkingPayments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            // Configure parking fees with two decimal places
+            modelBuilder.Entity<ParkingSession>()
+                .Property(p => p.Fee)
+                .HasPrecision(18, 2);
 
+            modelBuilder.Entity<VehicleEntry>()
+                .Property(v => v.Fee)
+                .HasPrecision(18, 2);
             // Existing parking session relationship
             modelBuilder.Entity<ParkingSession>()
                 .HasOne(p => p.User)
@@ -31,7 +41,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Vehicle entry relationships
+            // Existing vehicle entry relationships
             modelBuilder.Entity<VehicleEntry>()
                 .HasOne(v => v.User)
                 .WithMany()
@@ -50,12 +60,30 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
                 .HasForeignKey(v => v.ParkingSessionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Prevent the same vehicle from having
-            // multiple active entry records
+            // Existing unique active vehicle entry rule
             modelBuilder.Entity<VehicleEntry>()
                 .HasIndex(v => v.VehicleNumber)
                 .IsUnique()
                 .HasFilter("[ExitTime] IS NULL");
+
+            // Payment belongs to a vehicle entry
+            modelBuilder.Entity<ParkingPayment>()
+                .HasOne(p => p.VehicleEntry)
+                .WithMany()
+                .HasForeignKey(p => p.VehicleEntryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Registered user is optional for guest payments
+            modelBuilder.Entity<ParkingPayment>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Every payment has a unique transaction reference
+            modelBuilder.Entity<ParkingPayment>()
+                .HasIndex(p => p.TransactionReference)
+                .IsUnique();
 
             // Existing parking space seed data
             modelBuilder.Entity<ParkingSpace>().HasData(
