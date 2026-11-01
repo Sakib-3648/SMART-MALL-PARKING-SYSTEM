@@ -1,0 +1,116 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.CreditTopUpModel
+
+@{
+    ViewData["Title"] = "Admin Credit Top-Up";
+}
+
+<div class="container mt-4">
+
+    <h2>Admin Credit Top-Up</h2>
+
+    <p class="text-warning">
+        Testing feature — all top-ups are simulated.
+        No real money is collected.
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div asp-validation-summary="All"
+         class="text-danger"></div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="VehicleNumber"
+                           class="form-label">
+                        Vehicle Number
+                    </label>
+
+                    <input asp-for="VehicleNumber"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Amount"
+                           class="form-label">
+                        Amount (RM)
+                    </label>
+
+                    <input asp-for="Amount"
+                           type="number"
+                           min="0.01"
+                           max="10000"
+                           step="0.01"
+                           class="form-control"
+                           required />
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success">
+                    Add Simulated Credit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <h4>Recent Credit Transactions</h4>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vehicle</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Mode</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model.RecentTransactions)
+                {
+                    <tr>
+                        <td>
+                            @item.CreatedAt.ToString(
+                                "dd MMM yyyy HH:mm")
+                        </td>
+                        <td>@item.User?.VehicleNumber</td>
+                        <td>@item.TransactionType</td>
+                        <td>
+                            RM @item.Amount.ToString("0.00")
+                        </td>
+                        <td>
+                            RM @item.BalanceAfter.ToString("0.00")
+                        </td>
+                        <td>
+                            @(item.IsSimulated
+                                ? "Simulated"
+                                : "Non-simulated")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4 mb-3">
+        <a href="/Admin/Dashboard"
+           class="btn btn-primary mt-3">
+            ← Back to Admin Dashboard
+        </a>
+    </div>
+
+</div>

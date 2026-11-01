@@ -22,6 +22,62 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.CreditTransaction", b =>
+                {
+                    b.Property<int>("CreditTransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CreditTransactionId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<bool>("IsSimulated")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ParkingReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VehicleEntryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CreditTransactionId");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("CreditTransactions");
+                });
+
             modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.ParkingPayment", b =>
                 {
                     b.Property<int>("ParkingPaymentId")
@@ -71,7 +127,9 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("VehicleEntryId");
+                    b.HasIndex(new[] { "VehicleEntryId" }, "UX_ParkingPayments_OneSuccessfulPerEntry")
+                        .IsUnique()
+                        .HasFilter("[PaymentStatus] = 'Successful'");
 
                     b.ToTable("ParkingPayments");
                 });
@@ -92,6 +150,10 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
                     b.Property<DateTime>("ReservationStart")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ReservationType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -249,6 +311,12 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
+                    b.Property<decimal>("CreditBalance")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -326,6 +394,17 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         .HasFilter("[ExitTime] IS NULL");
 
                     b.ToTable("VehicleEntries");
+                });
+
+            modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.CreditTransaction", b =>
+                {
+                    b.HasOne("SMART_MALL_PARKING_SYSTEM.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SMART_MALL_PARKING_SYSTEM.Models.ParkingPayment", b =>

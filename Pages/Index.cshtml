@@ -17,6 +17,14 @@
             Vehicle Number:
             <strong>@Model.VehicleNumber</strong>
         </p>
+        <div class="alert alert-success mx-auto mt-3"
+             style="max-width: 450px;">
+            <h5 class="mb-1"> My Credit Balance</h5>
+
+            <h3 class="mb-0">
+                RM @Model.CreditBalance.ToString("0.00")
+            </h3>
+        </div>
 
         <p>
             Current Parking:
@@ -24,6 +32,10 @@
                 @if (Model.CurrentParkingStatus == "Active")
                 {
                     @($"{Model.CurrentParkingSpace} — Active")
+                }
+                else if (Model.CurrentParkingStatus == "Reserved")
+                {
+                    @($"{Model.CurrentParkingSpace} — Reserved")
                 }
                 else
                 {
@@ -41,8 +53,118 @@
 
             <p>
                 Estimated Fee:
-                <strong>RM @Model.CurrentFee.ToString("0.00")</strong>
+                <strong>
+                    RM @Model.CurrentFee.ToString("0.00")
+                </strong>
             </p>
+        }
+
+        @if (Model.HasActiveReservation)
+        {
+            <div class="card mt-4 mb-4 mx-auto"
+                 style="max-width: 650px;">
+
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        Current Reservation
+                    </h4>
+                </div>
+
+                <div class="card-body">
+
+                    <p>
+                        Parking Space:
+                        <strong>
+                            @Model.ReservationParkingSpace
+                        </strong>
+                    </p>
+
+                    <p>
+                        Reservation Status:
+
+                        @if (Model.IsReservationOvertime)
+                        {
+                            <strong class="text-danger">
+                                Overtime
+                            </strong>
+                        }
+                        else if (Model.VehicleEnteredAt.HasValue)
+                        {
+                            <strong class="text-success">
+                                Started — Vehicle Inside
+                            </strong>
+                        }
+                        else
+                        {
+                            <strong class="text-success">
+                                Reserved
+                            </strong>
+                        }
+                    </p>
+
+                    <p>
+                        Reservation Duration:
+                        <strong>
+                            @Model.ReservationDuration
+                        </strong>
+                    </p>
+
+                    <p>
+                        Reservation Start:
+                        <strong>
+                            @Model.ReservationStart?.ToString(
+                                "dd MMM yyyy, hh:mm tt")
+                        </strong>
+                    </p>
+
+                    <p>
+                        Reservation End:
+                        <strong>
+                            @Model.ReservationEnd?.ToString(
+                                "dd MMM yyyy, hh:mm tt")
+                        </strong>
+                    </p>
+
+                    <p>
+                        Reservation Time Remaining:
+                        <strong>
+                            @Model.ReservationTimeRemaining
+                        </strong>
+                    </p>
+
+                    @if (Model.VehicleEnteredAt.HasValue)
+                    {
+                        <p>
+                            Vehicle Entered:
+                            <strong>
+                                @Model.VehicleEnteredAt.Value.ToString(
+                                    "dd MMM yyyy, hh:mm tt")
+                            </strong>
+                        </p>
+
+                        <p class="text-success">
+                            Vehicle is currently inside the parking area.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-warning">
+                            Vehicle has not entered the parking area yet.
+                        </p>
+                    }
+
+                    @if (Model.IsReservationOvertime)
+                    {
+                        <p class="text-danger">
+                            <strong>
+                                Reservation time ended.
+                                Overtime charges are now applying.
+                            </strong>
+                        </p>
+                    }
+
+                </div>
+            </div>
         }
     }
 

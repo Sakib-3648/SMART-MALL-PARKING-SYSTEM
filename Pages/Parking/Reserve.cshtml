@@ -6,6 +6,7 @@
 }
 
 <div class="container mt-5">
+
     <h1>Reserve Parking</h1>
 
     <div class="mb-3">
@@ -14,37 +15,204 @@
         </a>
     </div>
 
-    <p>Select a parking space and reservation time.</p>
-    <div asp-validation-summary="All" class="text-danger mb-3"></div>
-    <form method="post">
-    <div class="mb-3">
-    <label class="form-label">Parking Space</label>
+    <div asp-validation-summary="All"
+         class="text-danger mb-3"></div>
 
-    <select class="form-select" name="parkingSpaceId">
-        @foreach (var space in Model.ParkingSpaces)
-        {
-            <option value="@space.ParkingSpaceId">
-                @space.SpaceNumber
-            </option>
-        }
-    </select>
+    <h4>Choose Reservation Type</h4>
+
+    <div class="mb-3">
+        <button type="button"
+                class="btn btn-success m-1"
+                onclick="showReserveNow()"
+            @(Model.VehicleInside ? "disabled" : "")>
+            Reserve Now
+        </button>
+
+        <button type="button"
+                class="btn btn-primary m-1"
+                onclick="showAdvanceReservation()">
+            Advance Reservation
+        </button>
+    </div>
+
+    @if (Model.VehicleInside)
+    {
+        <p class="text-danger">
+            Your vehicle is already inside the parking area.
+            Reserve Now is unavailable until it exits.
+        </p>
+    }
+
+    <!-- RESERVE NOW SECTION -->
+    <section id="reserveNowSection" style="display:none;">
+
+        <h5>Reserve Now</h5>
+
+        <p>
+            Reservation starts when you confirm.
+            Select the reserved duration.
+        </p>
+
+        <form method="post" asp-page-handler="ReserveNow">
+
+            <div class="mb-3">
+                <label class="form-label" for="nowSpace">
+                    Parking Space
+                </label>
+
+                <select id="nowSpace"
+                        class="form-select"
+                        name="parkingSpaceId"
+                        required>
+
+                    @foreach (var space in Model.ParkingSpaces)
+                    {
+                        <option value="@space.ParkingSpaceId">
+                            @space.SpaceNumber
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="duration">
+                    Duration
+                </label>
+
+                <select class="form-select"
+                        id="duration"
+                        name="duration"
+                        required>
+
+                    <option value="1h">1 Hour</option>
+                    <option value="2h">2 Hours</option>
+                    <option value="1d">1 Day</option>
+                    <option value="7d">7 Days</option>
+                    <option value="1m">1 Month (calendar month)</option>
+                    <option value="custom">Custom Duration</option>
+
+                </select>
+            </div>
+
+            <div id="customDuration"
+                 class="row mb-3"
+                 style="display:none;">
+
+                <div class="col-sm-6">
+                    <label class="form-label" for="customHours">
+                        Hours
+                    </label>
+
+                    <input id="customHours"
+                           name="customHours"
+                           type="number"
+                           min="0"
+                           max="744"
+                           value="1"
+                           class="form-control" />
+                </div>
+
+                <div class="col-sm-6">
+                    <label class="form-label" for="customMinutes">
+                        Minutes
+                    </label>
+
+                    <input id="customMinutes"
+                           name="customMinutes"
+                           type="number"
+                           min="0"
+                           max="59"
+                           value="0"
+                           class="form-control" />
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success"
+                @(Model.VehicleInside ? "disabled" : "")>
+                Confirm Reserve Now
+            </button>
+
+        </form>
+    </section>
+
+    <!-- ADVANCE RESERVATION SECTION -->
+    <section id="advanceReservationSection"
+             style="display:none;">
+
+        <h5>Advance Reservation</h5>
+
+        <p>
+            Select a parking space and reservation time.
+        </p>
+
+        <form method="post">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Parking Space
+                </label>
+
+                <select class="form-select"
+                        name="parkingSpaceId">
+
+                    @foreach (var space in Model.ParkingSpaces)
+                    {
+                        <option value="@space.ParkingSpaceId">
+                            @space.SpaceNumber
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Reservation Start
+                </label>
+
+                <input type="datetime-local"
+                       class="form-control"
+                       name="reservationStart"
+                       required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Reservation End
+                </label>
+
+                <input type="datetime-local"
+                       class="form-control"
+                       name="reservationEnd"
+                       required />
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success">
+                Reserve Parking
+            </button>
+
+        </form>
+    </section>
+
 </div>
-<div class="mb-3">
-    <label class="form-label">Reservation Start</label>
-    <input type="datetime-local"
-           class="form-control"
-           name="reservationStart"
-           required />
-</div>
-<div class="mb-3">
-    <label class="form-label">Reservation End</label>
-    <input type="datetime-local"
-           class="form-control"
-           name="reservationEnd"
-           required />
-</div>
-<button type="submit" class="btn btn-success">
-    Reserve Parking
-</button>
-</form>
-</div>
+
+<script>
+    function showReserveNow() {
+        document.getElementById("reserveNowSection").style.display = "block";
+        document.getElementById("advanceReservationSection").style.display = "none";
+    }
+
+    function showAdvanceReservation() {
+        document.getElementById("reserveNowSection").style.display = "none";
+        document.getElementById("advanceReservationSection").style.display = "block";
+    }
+
+    document.getElementById("duration").addEventListener("change", function () {
+        document.getElementById("customDuration").style.display =
+            this.value === "custom" ? "flex" : "none";
+    });
+</script>

@@ -16,17 +16,47 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
         public DbSet<ParkingSpace> ParkingSpaces { get; set; }
         public DbSet<ParkingSession> ParkingSessions { get; set; }
         public DbSet<ParkingReservation> ParkingReservations { get; set; }
-
-        // Automatic vehicle entry and exit
         public DbSet<VehicleEntry> VehicleEntries { get; set; }
-
-        // FPX and Debit/Credit Card payments
         public DbSet<ParkingPayment> ParkingPayments { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // New prepaid credit transaction history
+        public DbSet<CreditTransaction> CreditTransactions { get; set; }
+
+        protected override void OnModelCreating(
+            ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Configure parking fees with two decimal places
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.CreditBalance)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0m);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .Property(t => t.BalanceAfter)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .HasIndex(t => t.Reference)
+                .IsUnique();
+
+            modelBuilder.Entity<CreditTransaction>()
+                .HasIndex(t => new
+                {
+                    t.UserId,
+                    t.CreatedAt
+                });
+
             modelBuilder.Entity<ParkingSession>()
                 .Property(p => p.Fee)
                 .HasPrecision(18, 2);
@@ -34,14 +64,13 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
             modelBuilder.Entity<VehicleEntry>()
                 .Property(v => v.Fee)
                 .HasPrecision(18, 2);
-            // Existing parking session relationship
+
             modelBuilder.Entity<ParkingSession>()
                 .HasOne(p => p.User)
                 .WithMany()
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Existing vehicle entry relationships
             modelBuilder.Entity<VehicleEntry>()
                 .HasOne(v => v.User)
                 .WithMany()
@@ -60,32 +89,34 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
                 .HasForeignKey(v => v.ParkingSessionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Existing unique active vehicle entry rule
             modelBuilder.Entity<VehicleEntry>()
                 .HasIndex(v => v.VehicleNumber)
                 .IsUnique()
                 .HasFilter("[ExitTime] IS NULL");
 
-            // Payment belongs to a vehicle entry
             modelBuilder.Entity<ParkingPayment>()
                 .HasOne(p => p.VehicleEntry)
                 .WithMany()
                 .HasForeignKey(p => p.VehicleEntryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Registered user is optional for guest payments
             modelBuilder.Entity<ParkingPayment>()
                 .HasOne(p => p.User)
                 .WithMany()
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Every payment has a unique transaction reference
             modelBuilder.Entity<ParkingPayment>()
                 .HasIndex(p => p.TransactionReference)
                 .IsUnique();
 
-            // Existing parking space seed data
+            modelBuilder.Entity<ParkingPayment>()
+                .HasIndex(
+                    p => p.VehicleEntryId,
+                    "UX_ParkingPayments_OneSuccessfulPerEntry")
+                .IsUnique()
+                .HasFilter("[PaymentStatus] = 'Successful'");
+
             modelBuilder.Entity<ParkingSpace>().HasData(
                 new ParkingSpace { ParkingSpaceId = 1, SpaceNumber = "P01", IsOccupied = false },
                 new ParkingSpace { ParkingSpaceId = 2, SpaceNumber = "P02", IsOccupied = false },

@@ -21,5 +21,6 @@ namespace SMART_MALL_PARKING_SYSTEM.Models
         public DateTime ReservationEnd { get; set; }
 
         public string Status { get; set; } = "Reserved";
+        public string ReservationType { get; set; } = "Advance";
     }
 } 

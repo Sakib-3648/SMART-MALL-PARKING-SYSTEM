@@ -1,0 +1,114 @@
+﻿@page
+@model SMART_MALL_PARKING_SYSTEM.Pages.Admin.CameraTestModel
+
+@{
+    ViewData["Title"] = "Mobile Camera Test";
+}
+
+<div class="container mt-5">
+
+    <h2 class="mb-3">Mobile Camera Test</h2>
+
+    <p class="text-muted">
+        Capture a vehicle number plate using your
+        mobile phone camera.
+    </p>
+
+    <form method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Select Scanner Type
+            </label>
+
+            <select asp-for="ScannerMode" class="form-select">
+                <option value="Plate">Number Plate Scanner</option>
+                <option value="General">General Text Scanner</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">
+                Vehicle Number Plate Photo
+            </label>
+
+            <input type="file"
+                   name="PlateImage"
+                   accept="image/*"
+                   capture="environment"
+                   class="form-control"
+                   required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Upload Plate Photo
+        </button>
+
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info mt-3">
+            @Model.Message
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.DetectedPlate))
+    {
+        <div class="card mt-4 border-success">
+            <div class="card-body text-center">
+                <h4>Detected Vehicle Number</h4>
+
+                <h2 class="text-success fw-bold">
+                    @Model.DetectedPlate
+                </h2>
+
+                <p class="text-muted">
+                    Please verify the number before using it
+                    for vehicle entry or exit.
+                </p>
+            </div>
+        </div>
+    }
+
+</div>
+<div class="alert alert-secondary mt-3">
+    <strong>Raw OCR Result:</strong>
+    <pre>@(string.IsNullOrWhiteSpace(Model.RawOcrText)
+        ? "(No text detected)"
+        : Model.RawOcrText)</pre>
+</div>
+@if (!string.IsNullOrEmpty(Model.ProcessedImagePreview))
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5>Processed Image Preview</h5>
+
+            <img src="@Model.ProcessedImagePreview"
+                 alt="Processed number plate image"
+                 class="img-fluid border rounded" />
+
+            <p class="text-muted mt-2">
+                This is the image sent to Tesseract
+                after cropping and enhancement.
+            </p>
+        </div>
+    </div>
+}
+@if (Model.ScannerMode == "General")
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5>General Text Scanner Result</h5>
+
+            <pre class="p-3 bg-light border rounded"
+                 style="white-space: pre-wrap;">@(string.IsNullOrWhiteSpace(Model.GeneralTextResult)
+                     ? "No text detected."
+                     : Model.GeneralTextResult)</pre>
+        </div>
+    </div>
+}
+
+<form method="post" asp-page-handler="TestOcr" class="mt-3">
+    <button type="submit" class="btn btn-warning">
+        Test OCR Engine (ABC1234)
+    </button>
+</form>

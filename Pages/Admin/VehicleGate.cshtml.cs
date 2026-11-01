@@ -89,14 +89,43 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             TempData["PaymentAmount"] = $"{amount:0.00}";
         }
 
+
         private static decimal CalculateFee(
             VehicleEntry entry,
             DateTime now)
         {
+            var reservation = entry.ParkingReservation;
+
+            // Reserve Now: charge for the entire reserved period
+            // plus overtime after the scheduled reservation end.
+            if (reservation != null &&
+                reservation.ReservationType == "ReserveNow")
+            {
+                double reservedMinutes =
+                    (reservation.ReservationEnd -
+                     reservation.ReservationStart).TotalMinutes;
+
+                double overtimeMinutes = Math.Max(
+                    0,
+                    (now - reservation.ReservationEnd).TotalMinutes);
+
+                // Round billable minutes upward.
+                decimal totalMinutes =
+                    (decimal)Math.Ceiling(
+                        reservedMinutes + overtimeMinutes);
+
+                return Math.Round(
+                    totalMinutes * HourlyRate / 60m,
+                    2,
+                    MidpointRounding.AwayFromZero);
+            }
+
+            // Existing calculation for normal parking and
+            // Advance Reservation is preserved.
             var billUntil =
-                entry.ParkingReservation != null &&
-                entry.ParkingReservation.ReservationEnd > now
-                    ? entry.ParkingReservation.ReservationEnd
+                reservation != null &&
+                reservation.ReservationEnd > now
+                    ? reservation.ReservationEnd
                     : now;
 
             var hours = Math.Max(
@@ -106,6 +135,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
 
             return (decimal)hours * HourlyRate;
         }
+
 
         public async Task<IActionResult> OnGetAsync()
         {
