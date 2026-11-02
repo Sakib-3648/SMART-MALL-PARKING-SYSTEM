@@ -216,6 +216,11 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ParkingSpaceId"));
 
+                    b.Property<int>("FloorNumber")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("bit");
 
@@ -224,9 +229,12 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
 
                     b.Property<string>("SpaceNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ParkingSpaceId");
+
+                    b.HasIndex("FloorNumber", "SpaceNumber")
+                        .IsUnique();
 
                     b.ToTable("ParkingSpaces");
 
@@ -234,6 +242,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 1,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P01"
@@ -241,6 +250,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 2,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P02"
@@ -248,6 +258,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 3,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P03"
@@ -255,6 +266,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 4,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P04"
@@ -262,6 +274,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 5,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P05"
@@ -269,6 +282,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 6,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P06"
@@ -276,6 +290,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 7,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P07"
@@ -283,6 +298,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 8,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P08"
@@ -290,6 +306,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 9,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P09"
@@ -297,6 +314,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Migrations
                         new
                         {
                             ParkingSpaceId = 10,
+                            FloorNumber = 1,
                             IsBlocked = false,
                             IsOccupied = false,
                             SpaceNumber = "P10"

@@ -26,6 +26,18 @@ namespace SMART_MALL_PARKING_SYSTEM.Data
             ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            // Five-floor parking system
+            modelBuilder.Entity<ParkingSpace>()
+                .Property(p => p.FloorNumber)
+                .HasDefaultValue(1);
+
+            modelBuilder.Entity<ParkingSpace>()
+                .HasIndex(p => new
+                {
+                    p.FloorNumber,
+                    p.SpaceNumber
+                })
+                .IsUnique();
 
             modelBuilder.Entity<User>()
                 .Property(u => u.CreditBalance)

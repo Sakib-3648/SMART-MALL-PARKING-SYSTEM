@@ -1,218 +1,141 @@
 ﻿@page
 @model SMART_MALL_PARKING_SYSTEM.Pages.Parking.ReserveModel
-
+@using System.Linq
 @{
     ViewData["Title"] = "Reserve Parking";
+    int initialFloor = Model.Floor.HasValue && Model.Floor.Value >= 1 && Model.Floor.Value <= 5
+        ? Model.Floor.Value : 1;
+    int initialSpaceId = Model.ParkingSpaceId ?? 0;
 }
-
-<div class="container mt-5">
-
+<div class="container mt-5 mb-5">
     <h1>Reserve Parking</h1>
-
-    <div class="mb-3">
-        <a asp-page="/Index" class="btn btn-secondary">
-            ← Back to Home
-        </a>
-    </div>
-
-    <div asp-validation-summary="All"
-         class="text-danger mb-3"></div>
+    <div class="mb-3"><a asp-page="/Index" class="btn btn-secondary">← Back to Home</a></div>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <h4>Choose Reservation Type</h4>
-
     <div class="mb-3">
-        <button type="button"
-                class="btn btn-success m-1"
-                onclick="showReserveNow()"
-            @(Model.VehicleInside ? "disabled" : "")>
-            Reserve Now
-        </button>
-
-        <button type="button"
-                class="btn btn-primary m-1"
-                onclick="showAdvanceReservation()">
-            Advance Reservation
-        </button>
+        <button type="button" class="btn btn-success m-1" onclick="showReserveNow()" disabled="@Model.VehicleInside">Reserve Now</button>
+        <button type="button" class="btn btn-primary m-1" onclick="showAdvanceReservation()">Advance Reservation</button>
     </div>
-
     @if (Model.VehicleInside)
     {
-        <p class="text-danger">
-            Your vehicle is already inside the parking area.
-            Reserve Now is unavailable until it exits.
-        </p>
+        <p class="text-danger">Your vehicle is already inside the parking area. Reserve Now is unavailable until it exits.</p>
     }
 
-    <!-- RESERVE NOW SECTION -->
     <section id="reserveNowSection" style="display:none;">
-
         <h5>Reserve Now</h5>
-
-        <p>
-            Reservation starts when you confirm.
-            Select the reserved duration.
-        </p>
-
+        <p>Reservation starts when you confirm. The full selected duration is paid from your credit balance.</p>
         <form method="post" asp-page-handler="ReserveNow">
-
             <div class="mb-3">
-                <label class="form-label" for="nowSpace">
-                    Parking Space
-                </label>
-
-                <select id="nowSpace"
-                        class="form-select"
-                        name="parkingSpaceId"
-                        required>
-
-                    @foreach (var space in Model.ParkingSpaces)
+                <label class="form-label" for="nowFloor">Floor</label>
+                <select id="nowFloor" class="form-select floor-select" data-space-select="nowSpace" required>
+                    @for (int floor = 1; floor <= 5; floor++)
                     {
-                        <option value="@space.ParkingSpaceId">
-                            @space.SpaceNumber
-                        </option>
+                        <option value="@floor" selected="@(floor == initialFloor)">Floor @floor</option>
                     }
-
                 </select>
             </div>
-
             <div class="mb-3">
-                <label class="form-label" for="duration">
-                    Duration
-                </label>
-
-                <select class="form-select"
-                        id="duration"
-                        name="duration"
-                        required>
-
+                <label class="form-label" for="nowSpace">Parking Space</label>
+                <select id="nowSpace" class="form-select" name="parkingSpaceId" required>
+                    @foreach (var space in Model.ParkingSpaces)
+                    {
+                        <option value="@space.ParkingSpaceId" data-floor="@space.FloorNumber" selected="@(space.ParkingSpaceId == initialSpaceId)">@space.SpaceNumber</option>
+                    }
+                </select>
+                <small class="text-muted">Final availability is checked when you confirm your booking.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="duration">Duration</label>
+                <select class="form-select" id="duration" name="duration" required>
                     <option value="1h">1 Hour</option>
                     <option value="2h">2 Hours</option>
                     <option value="1d">1 Day</option>
                     <option value="7d">7 Days</option>
                     <option value="1m">1 Month (calendar month)</option>
                     <option value="custom">Custom Duration</option>
-
                 </select>
             </div>
-
-            <div id="customDuration"
-                 class="row mb-3"
-                 style="display:none;">
-
+            <div id="customDuration" class="row mb-3" style="display:none;">
                 <div class="col-sm-6">
-                    <label class="form-label" for="customHours">
-                        Hours
-                    </label>
-
-                    <input id="customHours"
-                           name="customHours"
-                           type="number"
-                           min="0"
-                           max="744"
-                           value="1"
-                           class="form-control" />
+                    <label class="form-label" for="customHours">Hours</label>
+                    <input id="customHours" name="customHours" type="number" min="0" max="744" value="1" class="form-control" />
                 </div>
-
                 <div class="col-sm-6">
-                    <label class="form-label" for="customMinutes">
-                        Minutes
-                    </label>
-
-                    <input id="customMinutes"
-                           name="customMinutes"
-                           type="number"
-                           min="0"
-                           max="59"
-                           value="0"
-                           class="form-control" />
+                    <label class="form-label" for="customMinutes">Minutes</label>
+                    <input id="customMinutes" name="customMinutes" type="number" min="0" max="59" value="0" class="form-control" />
                 </div>
-
             </div>
-
-            <button type="submit"
-                    class="btn btn-success"
-                @(Model.VehicleInside ? "disabled" : "")>
-                Confirm Reserve Now
-            </button>
-
+            <button type="submit" class="btn btn-success" disabled="@Model.VehicleInside">Confirm Reserve Now</button>
         </form>
     </section>
 
-    <!-- ADVANCE RESERVATION SECTION -->
-    <section id="advanceReservationSection"
-             style="display:none;">
-
+    <section id="advanceReservationSection" style="display:none;">
         <h5>Advance Reservation</h5>
-
-        <p>
-            Select a parking space and reservation time.
-        </p>
-
+        <p>Select a floor, parking space, and future reservation period. Credit is deducted when the booking is confirmed.</p>
         <form method="post">
-
             <div class="mb-3">
-                <label class="form-label">
-                    Parking Space
-                </label>
-
-                <select class="form-select"
-                        name="parkingSpaceId">
-
+                <label class="form-label" for="advanceFloor">Floor</label>
+                <select id="advanceFloor" class="form-select floor-select" data-space-select="advanceSpace" required>
+                    @for (int floor = 1; floor <= 5; floor++)
+                    {
+                        <option value="@floor" selected="@(floor == initialFloor)">Floor @floor</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="advanceSpace">Parking Space</label>
+                <select id="advanceSpace" class="form-select" name="parkingSpaceId" required>
                     @foreach (var space in Model.ParkingSpaces)
                     {
-                        <option value="@space.ParkingSpaceId">
-                            @space.SpaceNumber
-                        </option>
+                        <option value="@space.ParkingSpaceId" data-floor="@space.FloorNumber" selected="@(space.ParkingSpaceId == initialSpaceId)">@space.SpaceNumber</option>
                     }
-
                 </select>
+                <small class="text-muted">Future reservation conflicts are checked when you confirm.</small>
             </div>
-
             <div class="mb-3">
-                <label class="form-label">
-                    Reservation Start
-                </label>
-
-                <input type="datetime-local"
-                       class="form-control"
-                       name="reservationStart"
-                       required />
+                <label class="form-label" for="reservationStart">Reservation Start</label>
+                <input id="reservationStart" type="datetime-local" class="form-control" name="reservationStart" required />
             </div>
-
             <div class="mb-3">
-                <label class="form-label">
-                    Reservation End
-                </label>
-
-                <input type="datetime-local"
-                       class="form-control"
-                       name="reservationEnd"
-                       required />
+                <label class="form-label" for="reservationEnd">Reservation End</label>
+                <input id="reservationEnd" type="datetime-local" class="form-control" name="reservationEnd" required />
             </div>
-
-            <button type="submit"
-                    class="btn btn-success">
-                Reserve Parking
-            </button>
-
+            <button type="submit" class="btn btn-success">Confirm Advance Reservation</button>
         </form>
     </section>
-
 </div>
-
 <script>
     function showReserveNow() {
-        document.getElementById("reserveNowSection").style.display = "block";
-        document.getElementById("advanceReservationSection").style.display = "none";
+        document.getElementById('reserveNowSection').style.display = 'block';
+        document.getElementById('advanceReservationSection').style.display = 'none';
     }
-
     function showAdvanceReservation() {
-        document.getElementById("reserveNowSection").style.display = "none";
-        document.getElementById("advanceReservationSection").style.display = "block";
+        document.getElementById('reserveNowSection').style.display = 'none';
+        document.getElementById('advanceReservationSection').style.display = 'block';
     }
-
-    document.getElementById("duration").addEventListener("change", function () {
-        document.getElementById("customDuration").style.display =
-            this.value === "custom" ? "flex" : "none";
+    document.getElementById('duration').addEventListener('change', function () {
+        document.getElementById('customDuration').style.display = this.value === 'custom' ? 'flex' : 'none';
+    });
+    const requestedSpaceId = '@initialSpaceId';
+    document.querySelectorAll('.floor-select').forEach(function (floorSelect) {
+        const spaceSelect = document.getElementById(floorSelect.dataset.spaceSelect);
+        function updateSpaces(preferRequested) {
+            const floor = floorSelect.value;
+            let firstAvailable = null;
+            let requestedAvailable = false;
+            Array.from(spaceSelect.options).forEach(function (option) {
+                const matches = option.dataset.floor === floor;
+                option.hidden = !matches;
+                option.disabled = !matches;
+                if (matches && firstAvailable === null) firstAvailable = option.value;
+                if (matches && option.value === requestedSpaceId) requestedAvailable = true;
+            });
+            if (preferRequested && requestedAvailable) spaceSelect.value = requestedSpaceId;
+            else if (firstAvailable !== null) spaceSelect.value = firstAvailable;
+            else spaceSelect.selectedIndex = -1;
+        }
+        floorSelect.addEventListener('change', function () { updateSpaces(false); });
+        updateSpaces(true);
     });
 </script>

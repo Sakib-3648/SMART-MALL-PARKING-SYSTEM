@@ -4,6 +4,12 @@
 @{
     ViewData["Title"] = "Home";
 }
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success text-center mt-3">
+        @TempData["SuccessMessage"]
+    </div>
+}
 
 <div class="text-center" style="font-size: 20px;">
 

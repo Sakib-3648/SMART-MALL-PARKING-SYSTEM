@@ -1,4 +1,6 @@
 
+using System;
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -11,19 +13,30 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Parking
     {
         private readonly ApplicationDbContext _context;
 
+        private const decimal HourlyRate = 2m;
+
         public ReserveModel(ApplicationDbContext context)
         {
             _context = context;
         }
 
         public List<ParkingSpace> ParkingSpaces { get; set; } = new();
+
         public bool VehicleInside { get; set; }
+
+        // Used to open the correct floor and space from Parking Availability.
+        [BindProperty(SupportsGet = true)]
+        public int? Floor { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? ParkingSpaceId { get; set; }
 
         private async Task LoadPageDataAsync(int userId)
         {
             ParkingSpaces = await _context.ParkingSpaces
                 .Where(p => !p.IsOccupied && !p.IsBlocked)
-                .OrderBy(p => p.ParkingSpaceId)
+                .OrderBy(p => p.FloorNumber)
+                .ThenBy(p => p.ParkingSpaceId)
                 .ToListAsync();
 
             VehicleInside = await _context.ParkingSessions
@@ -40,6 +53,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Parking
                 return RedirectToPage("/Login");
 
             await LoadPageDataAsync(userId.Value);
+
             return Page();
         }
 
@@ -74,56 +88,117 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Parking
                 return Page();
             }
 
-            var selectedSpace = await _context.ParkingSpaces
-                .FirstOrDefaultAsync(p =>
-                    p.ParkingSpaceId == parkingSpaceId);
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
 
-            if (selectedSpace == null ||
-                selectedSpace.IsOccupied ||
-                selectedSpace.IsBlocked)
+            try
             {
-                ModelState.AddModelError(
-                    "",
-                    "This parking space is currently unavailable.");
+                // Validate again inside the transaction to protect booking and credit.
+                if (reservationStart <= DateTime.Now || reservationEnd <= reservationStart)
+                {
+                    ModelState.AddModelError("", "Please choose valid future reservation times.");
+                    await transaction.RollbackAsync();
+                    await LoadPageDataAsync(userId.Value);
+                    return Page();
+                }
 
-                await LoadPageDataAsync(userId.Value);
-                return Page();
-            }
+                var selectedSpace = await _context.ParkingSpaces
+                    .FirstOrDefaultAsync(p => p.ParkingSpaceId == parkingSpaceId);
 
-            bool conflict = await _context.ParkingReservations
-                .AnyAsync(r =>
+                if (selectedSpace == null || selectedSpace.IsOccupied || selectedSpace.IsBlocked)
+                {
+                    ModelState.AddModelError("", "This parking space is unavailable.");
+                    await transaction.RollbackAsync();
+                    await LoadPageDataAsync(userId.Value);
+                    return Page();
+                }
+
+                bool conflict = await _context.ParkingReservations.AnyAsync(r =>
                     r.ParkingSpaceId == parkingSpaceId &&
-                    r.Status == "Reserved" &&
+                    (r.Status == "Reserved" || r.Status == "Started") &&
                     reservationStart < r.ReservationEnd &&
                     reservationEnd > r.ReservationStart);
 
-            if (conflict)
-            {
-                ModelState.AddModelError(
-                    "",
-                    "This parking space is already reserved for that time.");
+                if (conflict)
+                {
+                    ModelState.AddModelError("", "This parking space is already reserved for that time.");
+                    await transaction.RollbackAsync();
+                    await LoadPageDataAsync(userId.Value);
+                    return Page();
+                }
 
+                decimal reservedMinutes = (decimal)Math.Ceiling(
+                    (reservationEnd - reservationStart).TotalMinutes);
+                decimal reservationFee = Math.Round(
+                    reservedMinutes * HourlyRate / 60m, 2,
+                    MidpointRounding.AwayFromZero);
+
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserId == userId.Value);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError("", "User account not found.");
+                    await transaction.RollbackAsync();
+                    await LoadPageDataAsync(userId.Value);
+                    return Page();
+                }
+
+                if (user.CreditBalance < reservationFee)
+                {
+                    ModelState.AddModelError("",
+                        $"Insufficient credit. Required RM{reservationFee:0.00}; " +
+                        $"available RM{user.CreditBalance:0.00}.");
+                    await transaction.RollbackAsync();
+                    await LoadPageDataAsync(userId.Value);
+                    return Page();
+                }
+
+                var reservation = new ParkingReservation
+                {
+                    UserId = userId.Value,
+                    ParkingSpaceId = parkingSpaceId,
+                    ReservationStart = reservationStart,
+                    ReservationEnd = reservationEnd,
+                    Status = "Reserved",
+                    ReservationType = "Advance"
+                };
+
+                _context.ParkingReservations.Add(reservation);
+                await _context.SaveChangesAsync();
+
+                user.CreditBalance -= reservationFee;
+                _context.CreditTransactions.Add(new CreditTransaction
+                {
+                    UserId = user.UserId,
+                    Amount = -reservationFee,
+                    BalanceAfter = user.CreditBalance,
+                    TransactionType = "Advance",
+                    Reference = $"ADVANCE-{reservation.ParkingReservationId}",
+                    Description = $"Prepaid advance reservation for Floor {selectedSpace.FloorNumber}, {selectedSpace.SpaceNumber}",
+                    ParkingReservationId = reservation.ParkingReservationId,
+                    IsSimulated = true,
+                    CreatedAt = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] =
+                    $"Advance reservation confirmed. RM{reservationFee:0.00} deducted. " +
+                    $"Remaining credit: RM{user.CreditBalance:0.00}.";
+                return RedirectToPage("/Index");
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError("", "Reservation failed. No credit was deducted.");
                 await LoadPageDataAsync(userId.Value);
                 return Page();
             }
-
-            var reservation = new ParkingReservation
-            {
-                UserId = userId.Value,
-                ParkingSpaceId = parkingSpaceId,
-                ReservationStart = reservationStart,
-                ReservationEnd = reservationEnd,
-                Status = "Reserved",
-                ReservationType = "Advance"
-            };
-
-            _context.ParkingReservations.Add(reservation);
-            await _context.SaveChangesAsync();
-
-            return RedirectToPage("/Index");
         }
 
-        // RESERVE NOW
+        // RESERVE NOW WITH PREPAID CREDIT
         public async Task<IActionResult> OnPostReserveNowAsync(
             int parkingSpaceId,
             string duration,
@@ -142,27 +217,6 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Parking
                 ModelState.AddModelError(
                     "",
                     "Your vehicle is already parked. Reserve Now is unavailable.");
-
-                return Page();
-            }
-
-            var now = DateTime.Now;
-
-            // Prevent multiple active Reserve Now reservations.
-            bool alreadyReserved = await _context.ParkingReservations
-                .AnyAsync(r =>
-                    r.UserId == userId.Value &&
-                    r.ReservationType == "ReserveNow" &&
-                    r.Status == "Reserved" &&
-                    r.ReservationStart <= now &&
-                    r.ReservationEnd > now);
-
-            if (alreadyReserved)
-            {
-                ModelState.AddModelError(
-                    "",
-                    "You already have an active Reserve Now reservation. " +
-                    "Please wait until it ends before reserving again.");
 
                 return Page();
             }
@@ -220,51 +274,178 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Parking
                     return Page();
             }
 
-            var selectedSpace = await _context.ParkingSpaces
-                .FirstOrDefaultAsync(p =>
-                    p.ParkingSpaceId == parkingSpaceId);
+            // Full reservation fee, rounded up to billable minutes.
+            decimal reservedMinutes =
+                (decimal)Math.Ceiling(
+                    (end - start).TotalMinutes);
 
-            if (selectedSpace == null ||
-                selectedSpace.IsOccupied ||
-                selectedSpace.IsBlocked)
+            decimal reservationFee = Math.Round(
+                reservedMinutes * HourlyRate / 60m,
+                2,
+                MidpointRounding.AwayFromZero);
+
+            // Keep the reservation and deduction in one transaction.
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable);
+
+            try
             {
+                // Recheck inside the transaction.
+                bool vehicleInside = await _context.ParkingSessions
+                    .AnyAsync(s =>
+                        s.UserId == userId.Value &&
+                        s.Status == "Active");
+
+                if (vehicleInside)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "Your vehicle is already parked.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                bool alreadyReserved =
+                    await _context.ParkingReservations
+                        .AnyAsync(r =>
+                            r.UserId == userId.Value &&
+                            r.ReservationType == "ReserveNow" &&
+                            r.Status == "Reserved" &&
+                            r.ReservationStart <= start &&
+                            r.ReservationEnd > start);
+
+                if (alreadyReserved)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "You already have an active Reserve Now reservation.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                var selectedSpace =
+                    await _context.ParkingSpaces
+                        .FirstOrDefaultAsync(p =>
+                            p.ParkingSpaceId == parkingSpaceId);
+
+                if (selectedSpace == null ||
+                    selectedSpace.IsOccupied ||
+                    selectedSpace.IsBlocked)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "This parking space is unavailable.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                bool conflict =
+                    await _context.ParkingReservations
+                        .AnyAsync(r =>
+                            r.ParkingSpaceId == parkingSpaceId &&
+                            (r.Status == "Reserved" ||
+                             r.Status == "Started") &&
+                            start < r.ReservationEnd &&
+                            end > r.ReservationStart);
+
+                if (conflict)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "This space is already reserved for that period.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u =>
+                        u.UserId == userId.Value);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "User account not found.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                if (user.CreditBalance < reservationFee)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        $"Insufficient credit. Reservation fee: " +
+                        $"RM{reservationFee:0.00}. " +
+                        $"Available credit: RM{user.CreditBalance:0.00}. " +
+                        "Please request a credit top-up.");
+
+                    await transaction.RollbackAsync();
+                    return Page();
+                }
+
+                var reservation = new ParkingReservation
+                {
+                    UserId = userId.Value,
+                    ParkingSpaceId = parkingSpaceId,
+                    ReservationStart = start,
+                    ReservationEnd = end,
+                    Status = "Reserved",
+                    ReservationType = "ReserveNow"
+                };
+
+                _context.ParkingReservations.Add(reservation);
+
+                // Save to obtain the reservation ID.
+                await _context.SaveChangesAsync();
+
+                user.CreditBalance -= reservationFee;
+
+                _context.CreditTransactions.Add(
+                    new CreditTransaction
+                    {
+                        UserId = user.UserId,
+                        Amount = -reservationFee,
+                        BalanceAfter = user.CreditBalance,
+                        TransactionType = "ReserveNow",
+                        Reference =
+                            $"RESERVE-{reservation.ParkingReservationId}",
+                        Description =
+                            $"Prepaid reservation fee for Floor {selectedSpace.FloorNumber}, " +
+                            $"{selectedSpace.SpaceNumber}",
+                        ParkingReservationId =
+                            reservation.ParkingReservationId,
+                        IsSimulated = true,
+                        CreatedAt = DateTime.Now
+                    });
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] =
+                    $"Reservation confirmed. " +
+                    $"RM{reservationFee:0.00} deducted from credit. " +
+                    $"Remaining balance: RM{user.CreditBalance:0.00}.";
+
+                return RedirectToPage("/Index");
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+
                 ModelState.AddModelError(
                     "",
-                    "This parking space is currently unavailable.");
+                    "Reservation could not be completed. " +
+                    "No credit was deducted. Please try again.");
 
+                await LoadPageDataAsync(userId.Value);
                 return Page();
             }
-
-            bool conflict = await _context.ParkingReservations
-                .AnyAsync(r =>
-                    r.ParkingSpaceId == parkingSpaceId &&
-                    r.Status == "Reserved" &&
-                    start < r.ReservationEnd &&
-                    end > r.ReservationStart);
-
-            if (conflict)
-            {
-                ModelState.AddModelError(
-                    "",
-                    "This space is already reserved for the selected period.");
-
-                return Page();
-            }
-
-            var reservation = new ParkingReservation
-            {
-                UserId = userId.Value,
-                ParkingSpaceId = parkingSpaceId,
-                ReservationStart = start,
-                ReservationEnd = end,
-                Status = "Reserved",
-                ReservationType = "ReserveNow"
-            };
-
-            _context.ParkingReservations.Add(reservation);
-            await _context.SaveChangesAsync();
-
-            return RedirectToPage("/Index");
         }
     }
 }

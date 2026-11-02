@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +9,6 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-
         private const decimal HourlyRate = 2m;
 
         public IndexModel(ApplicationDbContext context)
@@ -28,7 +26,6 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
         public decimal CurrentFee { get; set; }
         public string? ParkingDuration { get; set; }
 
-        // Reservation display properties
         public bool HasActiveReservation { get; set; }
         public DateTime? ReservationStart { get; set; }
         public DateTime? ReservationEnd { get; set; }
@@ -36,9 +33,14 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
         public string? ReservationParkingSpace { get; set; }
         public DateTime? VehicleEnteredAt { get; set; }
         public string? ReservationTimeRemaining { get; set; }
-
-        // Indicates that a started reservation has passed its end time.
         public bool IsReservationOvertime { get; set; }
+
+        private static string? FormatParkingSpace(ParkingSpace? space)
+        {
+            return space == null
+                ? null
+                : $"Floor {space.FloorNumber} — {space.SpaceNumber}";
+        }
 
         public async Task OnGetAsync()
         {
@@ -71,7 +73,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                 var parkingSpace = await _context.ParkingSpaces
                     .FindAsync(activeSession.ParkingSpaceId);
 
-                CurrentParkingSpace = parkingSpace?.SpaceNumber;
+                CurrentParkingSpace = FormatParkingSpace(parkingSpace);
 
                 var duration = now - activeSession.StartTime;
 
@@ -79,11 +81,8 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                     $"{(int)duration.TotalHours} hours " +
                     $"{duration.Minutes} minutes";
 
-                // Preserve normal parking calculation.
-                var hours = Math.Max(
-                    1,
-                    Math.Ceiling(duration.TotalHours));
-
+                // Preserve the existing normal parking calculation.
+                var hours = Math.Max(1, Math.Ceiling(duration.TotalHours));
                 CurrentFee = (decimal)hours * HourlyRate;
             }
             else
@@ -101,8 +100,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                     .Include(v => v.ParkingReservation)
                     .Where(v =>
                         v.UserId == UserId.Value &&
-                        v.ParkingSessionId ==
-                            activeSession.ParkingSessionId &&
+                        v.ParkingSessionId == activeSession.ParkingSessionId &&
                         v.ExitTime == null)
                     .OrderByDescending(v => v.EntryTime)
                     .FirstOrDefaultAsync();
@@ -151,7 +149,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                 var reservedSpace = await _context.ParkingSpaces
                     .FindAsync(activeReservation.ParkingSpaceId);
 
-                ReservationParkingSpace = reservedSpace?.SpaceNumber;
+                ReservationParkingSpace = FormatParkingSpace(reservedSpace);
 
                 if (activeSession != null &&
                     activeReservation.Status == "Started")
@@ -159,8 +157,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                     VehicleEnteredAt = activeSession.StartTime;
                 }
 
-                var remaining =
-                    activeReservation.ReservationEnd - now;
+                var remaining = activeReservation.ReservationEnd - now;
 
                 if (remaining > TimeSpan.Zero)
                 {
@@ -177,32 +174,27 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages
                         activeReservation.Status == "Started";
                 }
 
-                // Keep the original reservation space display
-                // separate from the active parking space.
+                // Keep the original reserved space separate from
+                // the actual active parking space after gate assignment.
                 if (activeSession == null)
                 {
                     CurrentParkingStatus = "Reserved";
-                    CurrentParkingSpace =
-                        reservedSpace?.SpaceNumber;
+                    CurrentParkingSpace = FormatParkingSpace(reservedSpace);
                 }
 
-                // Reserve Now:
-                // Full reserved fee + per-minute overtime.
+                // Preserve the existing Reserve Now fee calculation.
                 if (activeSession != null &&
                     activeReservation.Status == "Started" &&
                     activeReservation.ReservationType == "ReserveNow")
                 {
-                    double reservedMinutes =
-                        reservedDuration.TotalMinutes;
+                    double reservedMinutes = reservedDuration.TotalMinutes;
 
                     double overtimeMinutes = Math.Max(
                         0,
-                        (now - activeReservation.ReservationEnd)
-                            .TotalMinutes);
+                        (now - activeReservation.ReservationEnd).TotalMinutes);
 
                     decimal totalMinutes =
-                        (decimal)Math.Ceiling(
-                            reservedMinutes + overtimeMinutes);
+                        (decimal)Math.Ceiling(reservedMinutes + overtimeMinutes);
 
                     CurrentFee = Math.Round(
                         totalMinutes * HourlyRate / 60m,

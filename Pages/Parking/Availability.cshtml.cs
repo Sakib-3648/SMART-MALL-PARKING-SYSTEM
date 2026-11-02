@@ -20,85 +20,79 @@ public class AvailabilityModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         var userId = HttpContext.Session.GetInt32("UserId");
-
         if (userId == null)
-        {
             return RedirectToPage("/Login");
-        }
-        ParkingSpaces = await _context.ParkingSpaces
-            .OrderBy(p => p.ParkingSpaceId)
-            .ToListAsync();
-        var now = DateTime.Now;
 
-        ReservedSpaceIds = await _context.ParkingReservations
-            .Where(r =>
-                r.Status == "Reserved" &&
-               r.ReservationEnd >= now)
-            .Select(r => r.ParkingSpaceId)
-            .ToListAsync();
-        ReservedUntil = await _context.ParkingReservations
-    .Where(r =>
-        r.Status == "Reserved" &&
-        r.ReservationEnd >= now)
-    .GroupBy(r => r.ParkingSpaceId)
-    .ToDictionaryAsync(
-        g => g.Key,
-        g => g.Max(r => r.ReservationEnd));
+        await LoadPageDataAsync();
         return Page();
     }
 
+    private async Task LoadPageDataAsync()
+    {
+        ParkingSpaces = await _context.ParkingSpaces
+            .AsNoTracking()
+            .OrderBy(p => p.FloorNumber)
+            .ThenBy(p => p.ParkingSpaceId)
+            .ToListAsync();
+
+        var now = DateTime.Now;
+        var currentReservations = await _context.ParkingReservations
+            .AsNoTracking()
+            .Where(r => r.Status == "Reserved" &&
+                        r.ReservationStart <= now &&
+                        r.ReservationEnd > now)
+            .Select(r => new { r.ParkingSpaceId, r.ReservationEnd })
+            .ToListAsync();
+
+        ReservedSpaceIds = currentReservations
+            .Select(r => r.ParkingSpaceId)
+            .Distinct()
+            .ToList();
+
+        ReservedUntil = currentReservations
+            .GroupBy(r => r.ParkingSpaceId)
+            .ToDictionary(g => g.Key, g => g.Max(r => r.ReservationEnd));
+    }
+
+    // Retained for compatibility with the existing hidden manual selection feature.
+    // Normal parking entry continues through the Vehicle Gate.
     public async Task<IActionResult> OnPostSelectAsync(int parkingSpaceId)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
-
         if (userId == null)
-        {
             return RedirectToPage("/Login");
-        }
-        var activeSession = await _context.ParkingSessions
-    .FirstOrDefaultAsync(p => p.UserId == userId.Value && p.Status == "Active");
 
+        var activeSession = await _context.ParkingSessions
+            .FirstOrDefaultAsync(p => p.UserId == userId.Value && p.Status == "Active");
         if (activeSession != null)
-        {
             return RedirectToPage("/Parking/MyParking");
-        }
+
         var parkingSpace = await _context.ParkingSpaces
             .FirstOrDefaultAsync(p => p.ParkingSpaceId == parkingSpaceId);
-
-        if (parkingSpace == null ||
-     parkingSpace.IsOccupied ||
-     parkingSpace.IsBlocked)
-        {
+        if (parkingSpace == null || parkingSpace.IsOccupied || parkingSpace.IsBlocked)
             return RedirectToPage();
-        }
+
         var now = DateTime.Now;
-
         var isReservedNow = await _context.ParkingReservations
-            .AnyAsync(r =>
-                r.ParkingSpaceId == parkingSpaceId &&
-                r.Status == "Reserved" &&
-                r.ReservationEnd >= now);
-
+            .AnyAsync(r => r.ParkingSpaceId == parkingSpaceId &&
+                           r.Status == "Reserved" &&
+                           r.ReservationStart <= now &&
+                           r.ReservationEnd > now);
         if (isReservedNow)
-        {
             return RedirectToPage();
-        }
 
         var session = new ParkingSession
         {
             UserId = userId.Value,
             ParkingSpaceId = parkingSpaceId,
-            StartTime = DateTime.Now,
+            StartTime = now,
             Status = "Active",
             Fee = 0
         };
 
         _context.ParkingSessions.Add(session);
-
         parkingSpace.IsOccupied = true;
-
         await _context.SaveChangesAsync();
-
         return RedirectToPage("/Parking/MyParking");
     }
 }

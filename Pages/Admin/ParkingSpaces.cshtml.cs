@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -16,18 +17,25 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
         }
 
         public List<ParkingSpace> ParkingSpaces { get; set; } = new();
+
         public List<int> ReservedSpaceIds { get; set; } = new();
+
+        private bool IsAdminLoggedIn()
+        {
+            return HttpContext.Session.GetString("AdminLoggedIn") == "true";
+        }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
-            {
+            if (!IsAdminLoggedIn())
                 return RedirectToPage("/Admin/Login");
-            }
 
             ParkingSpaces = await _context.ParkingSpaces
-                .OrderBy(p => p.ParkingSpaceId)
+                .AsNoTracking()
+                .OrderBy(p => p.FloorNumber)
+                .ThenBy(p => p.ParkingSpaceId)
                 .ToListAsync();
+
             var now = DateTime.Now;
 
             ReservedSpaceIds = await _context.ParkingReservations
@@ -37,46 +45,15 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 .Select(r => r.ParkingSpaceId)
                 .Distinct()
                 .ToListAsync();
+
             return Page();
         }
-        public async Task<IActionResult> OnPostBlockAsync(int parkingSpaceId)
-        {
-            if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
-            {
-                return RedirectToPage("/Admin/Login");
-            }
 
-            var space = await _context.ParkingSpaces
-                .FirstOrDefaultAsync(p => p.ParkingSpaceId == parkingSpaceId);
-
-            if (space == null)
-            {
-                return RedirectToPage();
-            }
-
-            var isReserved = await _context.ParkingReservations
-                .AnyAsync(r =>
-                    r.ParkingSpaceId == parkingSpaceId &&
-                    r.Status == "Reserved" &&
-                    r.ReservationEnd >= DateTime.Now);
-
-            if (!space.IsOccupied && !isReserved)
-            {
-                space.IsBlocked = true;
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage();
-
-        }
-
-        public async Task<IActionResult> OnPostEmergencyBlockAsync(
+        public async Task<IActionResult> OnPostBlockAsync(
             int parkingSpaceId)
         {
-            if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
-            {
+            if (!IsAdminLoggedIn())
                 return RedirectToPage("/Admin/Login");
-            }
 
             var space = await _context.ParkingSpaces
                 .FirstOrDefaultAsync(p =>
@@ -88,12 +65,62 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 return RedirectToPage();
             }
 
-            // Emergency block is allowed for reserved spaces,
-            // but never for spaces with an active vehicle.
             if (space.IsOccupied)
             {
                 TempData["ErrorMessage"] =
-                    "Cannot block an occupied space. Clear the vehicle first.";
+                    $"Floor {space.FloorNumber} — {space.SpaceNumber} " +
+                    "is occupied and cannot be blocked.";
+
+                return RedirectToPage();
+            }
+
+            var isReserved = await _context.ParkingReservations
+                .AnyAsync(r =>
+                    r.ParkingSpaceId == parkingSpaceId &&
+                    r.Status == "Reserved" &&
+                    r.ReservationEnd >= DateTime.Now);
+
+            if (isReserved)
+            {
+                TempData["ErrorMessage"] =
+                    "This space has a reservation. " +
+                    "Use Emergency Block instead.";
+
+                return RedirectToPage();
+            }
+
+            space.IsBlocked = true;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Floor {space.FloorNumber} — " +
+                $"{space.SpaceNumber} blocked successfully.";
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostEmergencyBlockAsync(
+            int parkingSpaceId)
+        {
+            if (!IsAdminLoggedIn())
+                return RedirectToPage("/Admin/Login");
+
+            var space = await _context.ParkingSpaces
+                .FirstOrDefaultAsync(p =>
+                    p.ParkingSpaceId == parkingSpaceId);
+
+            if (space == null)
+            {
+                TempData["ErrorMessage"] = "Parking space not found.";
+                return RedirectToPage();
+            }
+
+            if (space.IsOccupied)
+            {
+                TempData["ErrorMessage"] =
+                    "Cannot block an occupied space. " +
+                    "Clear the vehicle first.";
 
                 return RedirectToPage();
             }
@@ -111,30 +138,36 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] =
-                $"Parking space {space.SpaceNumber} emergency blocked. " +
+                $"Floor {space.FloorNumber} — " +
+                $"{space.SpaceNumber} emergency blocked. " +
                 "Existing reservations have been preserved.";
 
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostUnblockAsync(int parkingSpaceId)
+        public async Task<IActionResult> OnPostUnblockAsync(
+            int parkingSpaceId)
         {
-            if (HttpContext.Session.GetString("AdminLoggedIn") != "true")
-            {
+            if (!IsAdminLoggedIn())
                 return RedirectToPage("/Admin/Login");
-            }
 
             var space = await _context.ParkingSpaces
-                .FirstOrDefaultAsync(p => p.ParkingSpaceId == parkingSpaceId);
+                .FirstOrDefaultAsync(p =>
+                    p.ParkingSpaceId == parkingSpaceId);
 
             if (space == null)
             {
+                TempData["ErrorMessage"] = "Parking space not found.";
                 return RedirectToPage();
             }
 
             space.IsBlocked = false;
 
             await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Floor {space.FloorNumber} — " +
+                $"{space.SpaceNumber} unblocked successfully.";
 
             return RedirectToPage();
         }

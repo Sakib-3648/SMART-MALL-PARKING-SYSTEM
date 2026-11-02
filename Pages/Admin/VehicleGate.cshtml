@@ -417,7 +417,18 @@
                         </td>
 
                         <td>
-                            @(entry.IsSpaceAssigned ? "Yes" : "No")
+                            @if (entry.IsSpaceAssigned &&
+                                 entry.ParkingSpaceId.HasValue &&
+                                 Model.RecentSpaceLabels.TryGetValue(
+                                     entry.ParkingSpaceId.Value,
+                                     out var location))
+                            {
+                                <strong>@location</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not assigned</span>
+                            }
                         </td>
 
                         <td class="fw-bold">

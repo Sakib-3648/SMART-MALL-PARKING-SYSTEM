@@ -30,6 +30,8 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
 
         public List<VehicleEntry> RecentEntries { get; set; }
             = new();
+        public Dictionary<int, string> RecentSpaceLabels { get; set; }
+    = new();
         public Dictionary<int, ParkingPayment> RecentPayments { get; set; }
     = new();
 
@@ -99,7 +101,8 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             // Reserve Now: charge for the entire reserved period
             // plus overtime after the scheduled reservation end.
             if (reservation != null &&
-                reservation.ReservationType == "ReserveNow")
+                (reservation.ReservationType == "ReserveNow" ||
+                 reservation.ReservationType == "Advance"))
             {
                 double reservedMinutes =
                     (reservation.ReservationEnd -
@@ -143,15 +146,19 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 return RedirectToPage("/Admin/Login");
 
             DisplayPlate =
-                TempData["GatePlate"]?.ToString() ?? "WAITING";
+    TempData["GatePlate"]?.ToString()
+    ?? HttpContext.Session.GetString("LastGatePlate")
+    ?? "WAITING";
 
             DisplaySpace =
-                TempData["GateSpace"]?.ToString() ?? "---";
+                TempData["GateSpace"]?.ToString()
+                ?? HttpContext.Session.GetString("LastGateSpace")
+                ?? "---";
 
             DisplayMessage =
                 TempData["GateMessage"]?.ToString()
+                ?? HttpContext.Session.GetString("LastGateMessage")
                 ?? "Ready to scan";
-
             DisplayFee =
                 TempData["GateFee"]?.ToString() ?? "---";
 
@@ -357,14 +364,21 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                string assignedLocation =
+    $"Floor {space.FloorNumber} — {space.SpaceNumber}";
+
                 TempData["GatePlate"] = VehicleNumber;
-                TempData["GateSpace"] = space.SpaceNumber;
+                TempData["GateSpace"] = assignedLocation;
                 TempData["GateMessage"] = "ENTRY APPROVED";
                 TempData["GateFee"] = null;
 
+                HttpContext.Session.SetString("LastGatePlate", VehicleNumber);
+                HttpContext.Session.SetString("LastGateSpace", assignedLocation);
+                HttpContext.Session.SetString("LastGateMessage", "ENTRY APPROVED");
+
                 TempData["SuccessMessage"] =
                     $"Vehicle {VehicleNumber} entered. " +
-                    $"Assigned space: {space.SpaceNumber}." +
+                   $"Assigned space: Floor {space.FloorNumber} — {space.SpaceNumber}." +
                     (reservation != null &&
                      reservation.ParkingSpaceId !=
                          space.ParkingSpaceId
@@ -384,197 +398,257 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             return RedirectToPage();
         }
 
-        // EXIT STEP 1:
-        // Calculate the fee without completing exit.
-        public async Task<IActionResult> OnPostExitAsync()
+        // Prepaid amount is taken from the successful reservation credit ledger,
+        // not simply from the ReservationType (older reservations may be unpaid).
+        private async Task<decimal> GetPrepaidAmountAsync(VehicleEntry entry)
         {
-            if (!IsAdmin())
-                return RedirectToPage("/Admin/Login");
+            if (!entry.ParkingReservationId.HasValue || !entry.UserId.HasValue)
+                return 0m;
 
-            if (!ValidatePlate())
-                return Fail("Invalid vehicle number.");
-
-            var entry = await _context.VehicleEntries
-                .AsNoTracking()
-                .Include(v => v.ParkingReservation)
-                .FirstOrDefaultAsync(v =>
-                    v.VehicleNumber == VehicleNumber &&
-                    v.ExitTime == null);
-
-            if (entry == null)
-            {
-                return Fail(
-                    "No active gate entry found.",
-                    "EXIT DENIED");
-            }
-
-            var fee = CalculateFee(entry, DateTime.Now);
-
-            ShowPaymentRequired(VehicleNumber, fee);
-
-            TempData["SuccessMessage"] =
-                $"Parking fee: RM {fee:0.00}. " +
-                "Select a simulated payment method " +
-                "to continue. Gate remains closed.";
-
-            return RedirectToPage();
+            int reservationId = entry.ParkingReservationId.Value;
+            int userId = entry.UserId.Value;
+            decimal prepaidDeductions = await _context.CreditTransactions
+                .Where(t => t.UserId == userId &&
+                            t.ParkingReservationId == reservationId &&
+                            (t.TransactionType == "ReserveNow" ||
+                             t.TransactionType == "Advance") && t.Amount < 0m)
+                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+            return -prepaidDeductions;
         }
 
-        // EXIT STEP 2:
-        // Simulated FPX / debit / credit payment.
-        // approved=false simulates a failed payment.
-        public async Task<IActionResult> OnPostPaymentAsync(
-            string paymentMethod,
-            bool approved)
+        private async Task<decimal> GetOutstandingAsync(VehicleEntry entry, DateTime now)
         {
-            if (!IsAdmin())
-                return RedirectToPage("/Admin/Login");
+            decimal total = CalculateFee(entry, now);
+            decimal prepaid = await GetPrepaidAmountAsync(entry);
+            return Math.Max(0m, total - prepaid);
+        }
 
-            if (!ValidatePlate())
-                return Fail("Invalid vehicle number.");
-
-            if (paymentMethod != "FPX" &&
-                paymentMethod != "DebitCard" &&
-                paymentMethod != "CreditCard")
+        private void DeductExitCredit(User user, VehicleEntry entry,
+            decimal amount, DateTime now)
+        {
+            if (amount <= 0m) return;
+            user.CreditBalance -= amount;
+            _context.CreditTransactions.Add(new CreditTransaction
             {
-                return Fail(
-                    "Invalid payment method.",
-                    "PAYMENT DENIED");
+                UserId = user.UserId,
+                Amount = -amount,
+                BalanceAfter = user.CreditBalance,
+                TransactionType = "ExitPayment",
+                Reference = $"EXIT-{entry.VehicleEntryId}",
+                Description = $"Exit credit payment for {entry.VehicleNumber}",
+                VehicleEntryId = entry.VehicleEntryId,
+                IsSimulated = true,
+                CreatedAt = now
+            });
+        }
+
+        private async Task CompleteExitAsync(VehicleEntry entry, DateTime now,
+            decimal totalFee)
+        {
+            entry.Fee = totalFee;
+            if (entry.ParkingSession != null &&
+                entry.ParkingSession.Status == "Active")
+            {
+                entry.ParkingSession.EndTime = now;
+                entry.ParkingSession.Fee = totalFee;
+                entry.ParkingSession.Status = "Completed";
             }
+            if (entry.ParkingReservation?.Status == "Started")
+                entry.ParkingReservation.Status = "Completed";
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync(
-                    IsolationLevel.Serializable);
+            if (entry.ParkingSpaceId.HasValue)
+            {
+                var space = await _context.ParkingSpaces.FindAsync(
+                    entry.ParkingSpaceId.Value);
+                if (space != null) space.IsOccupied = false;
+            }
+            entry.ExitTime = now;
+            entry.Status = "Exited";
+        }
 
+        private void ShowExitCompleted(decimal totalFee, string message)
+        {
+            TempData["GatePlate"] = VehicleNumber;
+            TempData["GateSpace"] = "EXIT";
+            TempData["GateMessage"] = "EXIT COMPLETED";
+            TempData["GateFee"] = $"RM {totalFee:0.00}";
+            TempData["SuccessMessage"] = message;
+        }
+
+        // Exit: automatically settle with credit when enough is available.
+        // Otherwise display the remaining FPX/card payment requirement.
+        public async Task<IActionResult> OnPostExitAsync()
+        {
+            if (!IsAdmin()) return RedirectToPage("/Admin/Login");
+            if (!ValidatePlate()) return Fail("Invalid vehicle number.");
+
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
+            try
+            {
+                var entry = await _context.VehicleEntries
+                    .Include(v => v.ParkingReservation)
+                    .Include(v => v.ParkingSession)
+                    .FirstOrDefaultAsync(v => v.VehicleNumber == VehicleNumber &&
+                                              v.ExitTime == null);
+                if (entry == null)
+                    return Fail("No active gate entry found.", "EXIT DENIED");
+
+                bool alreadyPaid = await _context.ParkingPayments.AnyAsync(p =>
+                    p.VehicleEntryId == entry.VehicleEntryId &&
+                    p.PaymentStatus == "Successful");
+                if (alreadyPaid)
+                    return Fail("Successful exit payment already exists. Administrator review required.",
+                        "PAYMENT REVIEW");
+
+                var now = DateTime.Now;
+                decimal totalFee = CalculateFee(entry, now);
+                decimal outstanding = await GetOutstandingAsync(entry, now);
+                User? user = entry.UserId.HasValue
+                    ? await _context.Users.FindAsync(entry.UserId.Value)
+                    : null;
+
+                // Zero outstanding (prepaid reservation with no overtime),
+                // or wallet covers all remaining charges.
+                if (outstanding == 0m ||
+                    (user != null && user.CreditBalance >= outstanding))
+                {
+                    if (outstanding > 0m && user != null)
+                        DeductExitCredit(user, entry, outstanding, now);
+
+                    _context.ParkingPayments.Add(new ParkingPayment
+                    {
+                        VehicleEntryId = entry.VehicleEntryId,
+                        UserId = entry.UserId,
+                        Amount = outstanding,
+                        PaymentMethod = "Wallet",
+                        PaymentStatus = "Successful",
+                        TransactionReference = Guid.NewGuid().ToString("N"),
+                        CreatedAt = now,
+                        PaidAt = now
+                    });
+                    await CompleteExitAsync(entry, now, totalFee);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    ShowExitCompleted(totalFee,
+                        $"Credit payment RM {outstanding:0.00} completed. " +
+                        "Exit approved and parking space released.");
+                    return RedirectToPage();
+                }
+
+                // Do not deduct credit yet. Only deduct it if the external
+                // simulated payment is approved, in the same transaction.
+                decimal walletAvailable = user != null
+                    ? Math.Max(0m, user.CreditBalance) : 0m;
+                decimal shortfall = Math.Max(0m, outstanding - walletAvailable);
+                await transaction.CommitAsync();
+                ShowPaymentRequired(VehicleNumber, shortfall);
+                TempData["SuccessMessage"] =
+                    $"Total fee RM {totalFee:0.00}; prepaid/credit considered. " +
+                    $"Available credit RM {walletAvailable:0.00}; " +
+                    $"FPX/card shortfall RM {shortfall:0.00}. " +
+                    "Credit will be deducted only after successful payment. " +
+                    "Gate remains closed.";
+                return RedirectToPage();
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                return Fail("Exit calculation failed. Check application logs.",
+                    "EXIT DENIED");
+            }
+        }
+
+        // Complete a hybrid wallet + simulated FPX/card payment.
+        public async Task<IActionResult> OnPostPaymentAsync(
+            string paymentMethod, bool approved)
+        {
+            if (!IsAdmin()) return RedirectToPage("/Admin/Login");
+            if (!ValidatePlate()) return Fail("Invalid vehicle number.");
+            if (paymentMethod != "FPX" && paymentMethod != "DebitCard" &&
+                paymentMethod != "CreditCard")
+                return Fail("Invalid payment method.", "PAYMENT DENIED");
+
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
             try
             {
                 var entry = await _context.VehicleEntries
                     .Include(v => v.ParkingSession)
                     .Include(v => v.ParkingReservation)
-                    .FirstOrDefaultAsync(v =>
-                        v.VehicleNumber == VehicleNumber &&
-                        v.ExitTime == null);
-
+                    .FirstOrDefaultAsync(v => v.VehicleNumber == VehicleNumber &&
+                                              v.ExitTime == null);
                 if (entry == null)
-                {
-                    return Fail(
-                        "Vehicle already exited or no " +
-                        "active entry found.",
+                    return Fail("Vehicle already exited or no active entry found.",
                         "EXIT DENIED");
-                }
 
-                // Avoid processing another successful payment
-                // for the same vehicle entry.
-                bool alreadyPaid =
-                    await _context.ParkingPayments
-                        .AnyAsync(p =>
-                            p.VehicleEntryId ==
-                                entry.VehicleEntryId &&
-                            p.PaymentStatus == "Successful");
-
+                bool alreadyPaid = await _context.ParkingPayments.AnyAsync(p =>
+                    p.VehicleEntryId == entry.VehicleEntryId &&
+                    p.PaymentStatus == "Successful");
                 if (alreadyPaid)
-                {
-                    return Fail(
-                        "A successful payment already exists. " +
-                        "Administrator review required.",
+                    return Fail("Successful payment already exists. Administrator review required.",
                         "PAYMENT REVIEW");
-                }
 
                 var now = DateTime.Now;
+                decimal totalFee = CalculateFee(entry, now);
+                decimal outstanding = await GetOutstandingAsync(entry, now);
+                User? user = entry.UserId.HasValue
+                    ? await _context.Users.FindAsync(entry.UserId.Value)
+                    : null;
+                decimal walletAmount = user != null
+                    ? Math.Min(Math.Max(0m, user.CreditBalance), outstanding)
+                    : 0m;
+                decimal externalAmount = outstanding - walletAmount;
 
-                // Recalculate at payment time because
-                // parking duration may have increased.
-                decimal fee = CalculateFee(entry, now);
+                // A payment button should not be used if wallet can cover all.
+                // The normal Exit action settles that case automatically.
+                if (externalAmount <= 0m)
+                {
+                    await transaction.RollbackAsync();
+                    return Fail("No FPX/card payment needed. Click Exit to pay with credit.",
+                        "USE CREDIT");
+                }
 
-                var payment = new ParkingPayment
+                _context.ParkingPayments.Add(new ParkingPayment
                 {
                     VehicleEntryId = entry.VehicleEntryId,
                     UserId = entry.UserId,
-                    Amount = fee,
+                    Amount = externalAmount,
                     PaymentMethod = paymentMethod,
-                    PaymentStatus =
-                        approved ? "Successful" : "Failed",
-                    TransactionReference =
-                        Guid.NewGuid().ToString("N"),
+                    PaymentStatus = approved ? "Successful" : "Failed",
+                    TransactionReference = Guid.NewGuid().ToString("N"),
                     CreatedAt = now,
                     PaidAt = approved ? now : null
-                };
-
-                _context.ParkingPayments.Add(payment);
+                });
 
                 if (!approved)
                 {
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-
-                    ShowPaymentRequired(VehicleNumber, fee);
-
-                    TempData["GateMessage"] =
-                        "PAYMENT FAILED";
-
+                    ShowPaymentRequired(VehicleNumber, externalAmount);
+                    TempData["GateMessage"] = "PAYMENT FAILED";
                     TempData["ErrorMessage"] =
-                        "Simulated payment declined. " +
-                        "The exit gate remains closed. " +
-                        "Please try another payment method.";
-
+                        "Simulated payment declined. Credit was not deducted. " +
+                        "Exit gate remains closed.";
                     return RedirectToPage();
                 }
 
-                // Payment succeeded: complete the exit.
-                entry.Fee = fee;
-
-                if (entry.ParkingSession != null &&
-                    entry.ParkingSession.Status == "Active")
-                {
-                    entry.ParkingSession.EndTime = now;
-                    entry.ParkingSession.Fee = fee;
-                    entry.ParkingSession.Status = "Completed";
-                }
-
-                if (entry.ParkingReservation?.Status == "Started")
-                {
-                    entry.ParkingReservation.Status = "Completed";
-                }
-
-                if (entry.ParkingSpaceId.HasValue)
-                {
-                    var space = await _context.ParkingSpaces
-                        .FirstOrDefaultAsync(p =>
-                            p.ParkingSpaceId ==
-                            entry.ParkingSpaceId.Value);
-
-                    if (space != null)
-                    {
-                        space.IsOccupied = false;
-                    }
-                }
-
-                entry.ExitTime = now;
-                entry.Status = "Exited";
-
+                if (walletAmount > 0m && user != null)
+                    DeductExitCredit(user, entry, walletAmount, now);
+                await CompleteExitAsync(entry, now, totalFee);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
-                TempData["GatePlate"] = VehicleNumber;
-                TempData["GateSpace"] = "EXIT";
-                TempData["GateMessage"] = "EXIT COMPLETED";
-                TempData["GateFee"] = $"RM {fee:0.00}";
-
-                TempData["SuccessMessage"] =
-                    $"Simulated {paymentMethod} payment " +
-                    $"successful: RM {fee:0.00}. " +
-                    "Exit approved and parking space released.";
+                ShowExitCompleted(totalFee,
+                    $"Simulated {paymentMethod} RM {externalAmount:0.00} " +
+                    $"and credit RM {walletAmount:0.00} successful. " +
+                    "Exit approved and parking space released.");
             }
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-
-                return Fail(
-                    "Payment or exit processing failed. " +
-                    "Check application logs.",
+                return Fail("Payment or exit failed. Check application logs.",
                     "EXIT DENIED");
             }
-
             return RedirectToPage();
         }
 
@@ -610,7 +684,20 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 .OrderByDescending(v => v.EntryTime)
                 .Take(20)
                 .ToListAsync();
+            var recentSpaceIds = RecentEntries
+    .Where(e => e.ParkingSpaceId.HasValue)
+    .Select(e => e.ParkingSpaceId!.Value)
+    .Distinct()
+    .ToList();
 
+            var recentSpaces = await _context.ParkingSpaces
+                .AsNoTracking()
+                .Where(p => recentSpaceIds.Contains(p.ParkingSpaceId))
+                .ToListAsync();
+
+            RecentSpaceLabels = recentSpaces.ToDictionary(
+                p => p.ParkingSpaceId,
+                p => $"Floor {p.FloorNumber} — {p.SpaceNumber}");
             // Find payments belonging to the recent vehicle entries.
             var entryIds = RecentEntries
                 .Select(v => v.VehicleEntryId)
