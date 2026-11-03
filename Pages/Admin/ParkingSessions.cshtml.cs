@@ -109,10 +109,10 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 .ToListAsync();
 
             SpaceNumbers = await _context.ParkingSpaces
-                .AsNoTracking()
-                .ToDictionaryAsync(
-                    p => p.ParkingSpaceId,
-                    p => p.SpaceNumber);
+     .AsNoTracking()
+     .ToDictionaryAsync(
+         p => p.ParkingSpaceId,
+         p => $"Floor {p.FloorNumber} — {p.SpaceNumber}");
 
             return Page();
         }

@@ -1,101 +1,446 @@
 ﻿@page
 @model AvailabilityModel
 @using System.Linq
+
 @{
     ViewData["Title"] = "Parking Availability";
-    var availableCount = Model.ParkingSpaces.Count(p => !p.IsOccupied && !p.IsBlocked && !Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
+
+    var availableCount = Model.ParkingSpaces.Count(p =>
+        !p.IsOccupied &&
+        !p.IsBlocked &&
+        !Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
 }
 
-<div class="container mt-4 mb-5">
+<style>
+    /* Parking Availability Page */
+
+    .availability-page {
+        color: #171717;
+    }
+
+        .availability-page h1,
+        .availability-page h3 {
+            color: #171717;
+        }
+
+        /* Reserved color: consistent dark orange */
+
+        .availability-page .reserved-text {
+            color: #9A4D00 !important;
+            font-weight: 700;
+        }
+
+        .availability-page .reserved-border {
+            border-color: #9A4D00 !important;
+        }
+
+        .availability-page .reserved-count {
+            background-color: #F5A623 !important;
+            color: #171717 !important;
+        }
+
+        .availability-page .reserved-button {
+            color: #9A4D00 !important;
+            border-color: #9A4D00 !important;
+            background-color: transparent !important;
+            opacity: 1 !important;
+        }
+
+        /* Floor accordion styling */
+
+        .availability-page .accordion-item {
+            border-radius: 10px !important;
+            overflow: hidden;
+        }
+
+        .availability-page .accordion-button {
+            background-color: #FFFFFF;
+            color: #171717;
+        }
+
+            .availability-page .accordion-button:not(.collapsed) {
+                background-color: #D6E6FF;
+                color: #102A4D;
+                box-shadow: none;
+            }
+
+        .availability-page .accordion-body {
+            background-color: #FFFFFF;
+            color: #171717;
+        }
+
+        /* Parking space cards */
+
+        .availability-page .parking-space-card {
+            background-color: #FFFFFF;
+            color: #171717;
+            border-width: 1px;
+            border-radius: 8px;
+        }
+
+            .availability-page .parking-space-card .card-title {
+                color: #171717;
+                font-weight: 700;
+            }
+
+            .availability-page .parking-space-card .btn:disabled {
+                opacity: 1;
+                cursor: not-allowed;
+            }
+
+        /* Improve text visibility */
+
+        .availability-page .availability-note {
+            color: #333333 !important;
+        }
+
+        .availability-page .reserved-until {
+            color: #555555 !important;
+        }
+
+        /* Full parking space background colors */
+
+        .availability-page .parking-space-card.space-available {
+            background-color: #198754 !important;
+            border-color: #146C43 !important;
+            color: #FFFFFF !important;
+        }
+
+        .availability-page .parking-space-card.space-reserved {
+            background-color: #F5A623 !important;
+            border-color: #A65300 !important;
+            color: #171717 !important;
+        }
+
+        .availability-page .parking-space-card.space-occupied {
+            background-color: #DC3545 !important;
+            border-color: #B02A37 !important;
+            color: #FFFFFF !important;
+        }
+
+        .availability-page .parking-space-card.space-blocked {
+            background-color: #6C757D !important;
+            border-color: #565E64 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Space number and status text */
+
+        .availability-page .space-available .card-title,
+        .availability-page .space-available .fw-semibold,
+        .availability-page .space-occupied .card-title,
+        .availability-page .space-occupied .fw-semibold,
+        .availability-page .space-blocked .card-title,
+        .availability-page .space-blocked .fw-semibold {
+            color: #FFFFFF !important;
+        }
+
+        .availability-page .space-reserved .card-title,
+        .availability-page .space-reserved .fw-semibold {
+            color: #171717 !important;
+        }
+
+        /* Reservation time inside orange boxes */
+
+        .availability-page .space-reserved .reserved-until {
+            color: #422600 !important;
+        }
+
+        /* Buttons inside colored boxes */
+
+        .availability-page .parking-space-card .btn {
+            background-color: rgba(255,255,255,0.95) !important;
+            color: #171717 !important;
+            border-color: rgba(255,255,255,0.8) !important;
+        }
+
+            .availability-page .parking-space-card .btn:disabled {
+                opacity: 1 !important;
+            }
+
+</style>
+
+<div class="container mt-4 mb-5 availability-page">
+
+    <!-- Available Spaces and Home Button -->
+
     <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-3">
-        <span class="badge bg-success fs-6">Available Spaces: @availableCount / @Model.ParkingSpaces.Count</span>
-        <a asp-page="/Index" class="btn btn-primary">Home</a>
+
+        <span class="badge bg-success fs-6">
+            Available Spaces:
+            @availableCount / @Model.ParkingSpaces.Count
+        </span>
+
+        <a asp-page="/Index" class="btn btn-primary">
+            Home
+        </a>
+
     </div>
 
-    <h1 class="text-center mb-2">SUMMIT USJ Mall Parking</h1>
-    <h3 class="text-center mb-4">Parking Availability</h3>
+    <!-- Page Title -->
+
+    <h1 class="text-center mb-2">
+        SUMMIT USJ Mall Parking
+    </h1>
+
+    <h3 class="text-center mb-4">
+        Parking Availability
+    </h3>
+
+    <!-- Parking Status Legend -->
 
     <div class="d-flex flex-wrap gap-3 justify-content-center mb-4">
-        <span class="text-success fw-semibold">● Available</span>
-        <span class="text-warning fw-semibold">● Reserved</span>
-        <span class="text-danger fw-semibold">● Occupied</span>
-        <span class="text-secondary fw-semibold">● Blocked</span>
+
+        <span class="text-success fw-semibold">
+            ● Available
+        </span>
+
+        <span class="reserved-text">
+            ● Reserved
+        </span>
+
+        <span class="text-danger fw-semibold">
+            ● Occupied
+        </span>
+
+        <span class="text-secondary fw-semibold">
+            ● Blocked
+        </span>
+
     </div>
 
+    <!-- Parking Floors -->
+
     <div class="accordion" id="parkingFloors">
+
         @for (int floor = 1; floor <= 5; floor++)
         {
             var floorNumber = floor;
-            var floorSpaces = Model.ParkingSpaces.Where(p => p.FloorNumber == floorNumber).ToList();
-            var floorAvailable = floorSpaces.Count(p => !p.IsOccupied && !p.IsBlocked && !Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
-            var floorOccupied = floorSpaces.Count(p => p.IsOccupied);
-            var floorReserved = floorSpaces.Count(p => !p.IsOccupied && !p.IsBlocked && Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
-            var floorBlocked = floorSpaces.Count(p => p.IsBlocked);
+
+            var floorSpaces = Model.ParkingSpaces
+                .Where(p => p.FloorNumber == floorNumber)
+                .ToList();
+
+            var floorAvailable = floorSpaces.Count(p =>
+                !p.IsOccupied &&
+                !p.IsBlocked &&
+                !Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
+
+            var floorOccupied = floorSpaces.Count(p =>
+                p.IsOccupied);
+
+            var floorReserved = floorSpaces.Count(p =>
+                !p.IsOccupied &&
+                !p.IsBlocked &&
+                Model.ReservedSpaceIds.Contains(p.ParkingSpaceId));
+
+            var floorBlocked = floorSpaces.Count(p =>
+                p.IsBlocked);
+
             var panelId = $"floorPanel{floorNumber}";
             var headingId = $"floorHeading{floorNumber}";
 
             <div class="accordion-item mb-3 border rounded overflow-hidden">
+
+                <!-- Floor Header -->
+
                 <h2 class="accordion-header" id="@headingId">
-                    <button class="accordion-button collapsed fw-bold" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#@panelId"
-                            aria-expanded="false" aria-controls="@panelId">
-                        <span class="me-3">Floor @floorNumber</span>
-                        <span class="badge bg-success me-2">@floorAvailable available</span>
-                        <span class="small text-muted fw-normal">@floorSpaces.Count spaces</span>
+
+                    <button class="accordion-button collapsed fw-bold"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@panelId"
+                            aria-expanded="false"
+                            aria-controls="@panelId">
+
+                        <span class="me-3">
+                            Floor @floorNumber
+                        </span>
+
+                        <span class="badge bg-success me-2">
+                            @floorAvailable available
+                        </span>
+
+                        <span class="small text-muted fw-normal">
+                            @floorSpaces.Count spaces
+                        </span>
+
                     </button>
+
                 </h2>
-                <div id="@panelId" class="accordion-collapse collapse" aria-labelledby="@headingId">
+
+                <!-- Floor Parking Spaces -->
+
+                <div id="@panelId"
+                     class="accordion-collapse collapse"
+                     aria-labelledby="@headingId">
+
                     <div class="accordion-body">
+
+                        <!-- Floor Status Counts -->
+
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-success">Available: @floorAvailable</span>
-                            <span class="badge bg-warning text-dark">Reserved: @floorReserved</span>
-                            <span class="badge bg-danger">Occupied: @floorOccupied</span>
-                            <span class="badge bg-secondary">Blocked: @floorBlocked</span>
+
+                            <span class="badge bg-success">
+                                Available: @floorAvailable
+                            </span>
+
+                            <span class="badge reserved-count">
+                                Reserved: @floorReserved
+                            </span>
+
+                            <span class="badge bg-danger">
+                                Occupied: @floorOccupied
+                            </span>
+
+                            <span class="badge bg-secondary">
+                                Blocked: @floorBlocked
+                            </span>
+
                         </div>
 
                         @if (floorSpaces.Count == 0)
                         {
-                            <div class="alert alert-info mb-0">No parking spaces have been added to this floor yet.</div>
+                            <div class="alert alert-info mb-0">
+                                No parking spaces have been added
+                                to this floor yet.
+                            </div>
                         }
                         else
                         {
                             <div class="row g-3">
+
                                 @foreach (var space in floorSpaces)
                                 {
                                     bool occupied = space.IsOccupied;
                                     bool blocked = space.IsBlocked;
-                                    bool reserved = !occupied && !blocked && Model.ReservedSpaceIds.Contains(space.ParkingSpaceId);
-                                    string status = blocked ? "Blocked" : occupied ? "Occupied" : reserved ? "Reserved" : "Available";
-                                    string borderColor = blocked ? "secondary" : occupied ? "danger" : reserved ? "warning" : "success";
+
+                                    bool reserved =
+                                        !occupied &&
+                                        !blocked &&
+                                        Model.ReservedSpaceIds.Contains(
+                                            space.ParkingSpaceId);
+
+                                    string status = blocked
+                                        ? "Blocked"
+                                        : occupied
+                                            ? "Occupied"
+                                            : reserved
+                                                ? "Reserved"
+                                                : "Available";
+
+                                    string borderColor = blocked
+                                        ? "secondary"
+                                        : occupied
+                                            ? "danger"
+                                            : reserved
+                                                ? "warning"
+                                                : "success";
+
+                                    string cardBorderClass = reserved
+                                        ? "reserved-border"
+                                        : $"border-{borderColor}";
+                                    string spaceColorClass = blocked
+? "space-blocked"
+: occupied
+    ? "space-occupied"
+    : reserved
+        ? "space-reserved"
+        : "space-available";
+
+                                    string statusTextClass = reserved
+                                        ? "reserved-text"
+                                        : $"text-{borderColor}";
+
+                                    string buttonClass = reserved
+                                        ? "reserved-button"
+                                        : $"btn-outline-{borderColor}";
+
                                     <div class="col-6 col-md-4 col-lg-3">
-                                        <div class="card text-center h-100 border-@borderColor">
+
+                                        <div class="card text-center h-100 parking-space-card @spaceColorClass">
+
                                             <div class="card-body d-flex flex-column align-items-center">
-                                                <h5 class="card-title">@space.SpaceNumber</h5>
-                                                <div class="text-@borderColor fw-semibold mb-2">● @status</div>
-                                                @if (reserved && Model.ReservedUntil.TryGetValue(space.ParkingSpaceId, out var until))
+
+                                                <!-- Space Number -->
+
+                                                <h5 class="card-title">
+                                                    @space.SpaceNumber
+                                                </h5>
+
+                                                <!-- Parking Status -->
+
+                                                <div class="@statusTextClass fw-semibold mb-2">
+                                                    ● @status
+                                                </div>
+
+                                                <!-- Reservation Expiry -->
+                                                @if (reserved &&
+                                                                                                    Model.ReservedUntil.TryGetValue(
+                                                                                                        space.ParkingSpaceId,
+                                                                                                        out var until))
                                                 {
-                                                    <small class="text-muted mb-2">Reserved until @until.ToString("dd/MM/yyyy hh:mm tt")</small>
+                                                    <small class="reserved-until mb-2">
+                                                        Reserved until
+                                                        @until.ToString("dd/MM/yyyy hh:mm tt")
+                                                    </small>
                                                 }
+
+                                                <!-- Available Parking Space -->
                                                 @if (status == "Available")
                                                 {
-                                                    <a asp-page="/Parking/Reserve" asp-route-floor="@space.FloorNumber" asp-route-parkingSpaceId="@space.ParkingSpaceId" class="btn btn-outline-success btn-sm mt-auto">Book / Reserve</a>
-                                                    @* Manual Select handler intentionally remains in Availability.cshtml.cs.
-                                                       Normal entry is handled by the Vehicle Gate. *@
+                                                    <a asp-page="/Parking/Reserve"
+                                                       asp-route-floor="@space.FloorNumber"
+                                                       asp-route-parkingSpaceId="@space.ParkingSpaceId"
+                                                       class="btn btn-outline-success btn-sm mt-auto">
+
+                                                        Book / Reserve
+
+                                                    </a>
+
+                                                    @* Manual Select handler intentionally
+                                                       remains in Availability.cshtml.cs.
+                                                       Normal entry is handled by
+                                                       the Vehicle Gate. *@
                                                 }
                                                 else
                                                 {
-                                                    <button type="button" class="btn btn-outline-@borderColor btn-sm mt-auto" disabled>@status</button>
+                                                    <!-- Reserved, Occupied or Blocked -->
+
+                                                    <button type="button"
+                                                            class="btn @buttonClass btn-sm mt-auto"
+                                                            disabled>
+
+                                                        @status
+
+                                                    </button>
                                                 }
+
                                             </div>
+
                                         </div>
+
                                     </div>
                                 }
+
                             </div>
                         }
+
                     </div>
+
                 </div>
+
             </div>
         }
+
     </div>
-    <p class="small text-muted mt-3">Availability shows the current status. Future reservation availability is checked against your selected dates when booking.</p>
+
+    <!-- Availability Information -->
+
+    <p class="small availability-note mt-3">
+        Availability shows the current status.
+        Future reservation availability is checked
+        against your selected dates when booking.
+    </p>
+
 </div>

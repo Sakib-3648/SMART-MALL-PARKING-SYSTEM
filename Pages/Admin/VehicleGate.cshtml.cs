@@ -146,18 +146,13 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 return RedirectToPage("/Admin/Login");
 
             DisplayPlate =
-    TempData["GatePlate"]?.ToString()
-    ?? HttpContext.Session.GetString("LastGatePlate")
-    ?? "WAITING";
+     TempData["GatePlate"]?.ToString() ?? "WAITING";
 
             DisplaySpace =
-                TempData["GateSpace"]?.ToString()
-                ?? HttpContext.Session.GetString("LastGateSpace")
-                ?? "---";
+                TempData["GateSpace"]?.ToString() ?? "---";
 
             DisplayMessage =
                 TempData["GateMessage"]?.ToString()
-                ?? HttpContext.Session.GetString("LastGateMessage")
                 ?? "Ready to scan";
             DisplayFee =
                 TempData["GateFee"]?.ToString() ?? "---";
@@ -372,9 +367,7 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
                 TempData["GateMessage"] = "ENTRY APPROVED";
                 TempData["GateFee"] = null;
 
-                HttpContext.Session.SetString("LastGatePlate", VehicleNumber);
-                HttpContext.Session.SetString("LastGateSpace", assignedLocation);
-                HttpContext.Session.SetString("LastGateMessage", "ENTRY APPROVED");
+               
 
                 TempData["SuccessMessage"] =
                     $"Vehicle {VehicleNumber} entered. " +
@@ -473,6 +466,16 @@ namespace SMART_MALL_PARKING_SYSTEM.Pages.Admin
             TempData["GateMessage"] = "EXIT COMPLETED";
             TempData["GateFee"] = $"RM {totalFee:0.00}";
             TempData["SuccessMessage"] = message;
+
+            // Update the digital gate display after exit.
+            HttpContext.Session.SetString(
+                "LastGatePlate", VehicleNumber);
+
+            HttpContext.Session.SetString(
+                "LastGateSpace", "EXIT");
+
+            HttpContext.Session.SetString(
+                "LastGateMessage", "EXIT COMPLETED");
         }
 
         // Exit: automatically settle with credit when enough is available.

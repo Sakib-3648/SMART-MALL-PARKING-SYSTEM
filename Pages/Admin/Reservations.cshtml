@@ -37,7 +37,19 @@
                     <td>@reservation.User?.FullName</td>
                     <td>@reservation.User?.Email</td>
                     <td>@reservation.User?.VehicleNumber</td>
-                    <td>@reservation.ParkingSpace?.SpaceNumber</td>
+                    <td>
+                        @if (reservation.ParkingSpace != null)
+                        {
+                            <span>
+                                Floor @reservation.ParkingSpace.FloorNumber —
+                                @reservation.ParkingSpace.SpaceNumber
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unknown Space</span>
+                        }
+                    </td>
                     <td>@reservation.ReservationStart.ToString("dd/MM/yyyy hh:mm tt")</td>
                     <td>@reservation.ReservationEnd.ToString("dd/MM/yyyy hh:mm tt")</td>
                     <td>@reservation.Status</td>

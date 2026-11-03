@@ -3,73 +3,152 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
 
-    <title>@ViewData["Title"] - Smart Mall Parking and Management System</title>
+    <title>
+        @ViewData["Title"] - Smart Mall Parking and Management System
+    </title>
 
     <script type="importmap"></script>
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SMART_MALL_PARKING_SYSTEM.styles.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/SMART_MALL_PARKING_SYSTEM.styles.css"
+          asp-append-version="true" />
 
     <style>
-            .mall-header {
-                text-align: center;
-                background: linear-gradient(135deg, #12345a, #24629a);
-                color: white;
-                padding: 30px 15px;
-                margin-bottom: 25px;
-                border-radius: 0 0 12px 12px;
-            }
+       
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
 
-            .mall-header h1 {
-                font-size: clamp(25px, 3.5vw, 38px);
-                font-weight: 700;
-                margin-bottom: 10px;
-            }
+    background: #FFD700 !important;
+    color: #171717;
+}
 
-            .mall-header p {
-                font-size: 18px;
-                font-style: italic;
-                margin-bottom: 0;
-                color: #e5eaf0;
-            }
 
-            .mall-footer {
-                padding: 18px 10px;
-                text-align: center;
-                font-size: 14px;
-            }
+
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .mall-header {
+            text-align: center;
+            background: rgba(5, 19, 39, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.14);
+            color: white;
+            padding: 28px 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        .mall-header h1 {
+            font-size: clamp(25px, 3.5vw, 38px);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .mall-header p {
+            font-size: 17px;
+            margin-bottom: 0;
+            color: #b6d4ee;
+        }
+
+        .mall-main {
+            flex: 1;
+            width: 100%;
+        }
+
+        .mall-footer {
+            background: rgba(5, 19, 39, 0.92);
+            border-top: 1px solid rgba(255,255,255,0.14) !important;
+            padding: 22px 10px;
+            text-align: center;
+            font-size: 13px;
+            color: #b5c9df !important;
+        }
+
+        .mall-footer a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+
+        .mall-footer a:hover {
+            color: white;
+            text-decoration: underline;
+        }
     </style>
 </head>
 
 <body>
 
-    <header class="mall-header">
-        <h1>Smart Mall Parking and Management System</h1>
-        <p>Summit USJ1, Subang Jaya, Malaysia</p>
-    </header>
+   
+@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
 
-    <div class="container">
+    bool isAdminPage = currentPage.StartsWith(
+        "/Admin/",
+        StringComparison.OrdinalIgnoreCase
+    );
+}
+
+
+    @if (isAdminPage)
+    {
+        <header class="mall-header">
+            <h1>
+                <i class="bi bi-car-front-fill me-2"></i>
+                Smart Mall Parking and Management System
+            </h1>
+
+            <p>
+                <i class="bi bi-geo-alt-fill me-1"></i>
+                Summit USJ1, Subang Jaya, Malaysia
+            </p>
+        </header>
+    }
+
+    <div class="container mall-main">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted mall-footer">
+    <footer class="footer mall-footer">
         <div class="container">
             &copy; 2026 - Smart Mall Parking and Management System
-            <div>
-                <em>Summit USJ1, Subang Jaya, Malaysia</em>
+
+            <div class="mt-1">
+                Summit USJ1, Subang Jaya, Malaysia
             </div>
-            <a asp-area="" asp-page="/Privacy">Privacy</a>
+
+            <a asp-area="" asp-page="/Privacy">
+                Privacy
+            </a>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 

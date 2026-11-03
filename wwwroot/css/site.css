@@ -1,3 +1,4 @@
+
 html {
   font-size: 14px;
 }
@@ -28,4 +29,29 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* Yellow page background */
+html,
+body {
+    background-color: #FFD700 !important;
+}
+
+/* Readable text outside cards */
+body {
+    color: #171717;
+}
+
+/* Keep Bootstrap dark cards readable */
+.bg-dark,
+.text-bg-dark {
+    color: #ffffff !important;
+}
+
+/* Improve normal headings on yellow background */
+main > h1,
+main > h2,
+main > h3,
+main > p {
+    color: #171717;
 }

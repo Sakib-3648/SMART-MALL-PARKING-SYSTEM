@@ -51,7 +51,19 @@
                         <td>@session.User?.FullName</td>
                         <td>@session.User?.Email</td>
                         <td>@session.User?.VehicleNumber</td>
-                        <td>@session.ParkingSpace?.SpaceNumber</td>
+                        <td>
+                            @if (session.ParkingSpace != null)
+                            {
+                                <span>
+                                    Floor @session.ParkingSpace.FloorNumber —
+                                    @session.ParkingSpace.SpaceNumber
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Unknown Space</span>
+                            }
+                        </td>
                         <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
                         <td>
                             <span class="badge bg-success">
@@ -138,7 +150,19 @@
                         <td>@session.User?.FullName</td>
                         <td>@session.User?.Email</td>
                         <td>@session.User?.VehicleNumber</td>
-                        <td>@session.ParkingSpace?.SpaceNumber</td>
+                        <td>
+                            @if (session.ParkingSpace != null)
+                            {
+                                <span>
+                                    Floor @session.ParkingSpace.FloorNumber —
+                                    @session.ParkingSpace.SpaceNumber
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Unknown Space</span>
+                            }
+                        </td>
                         <td>@session.StartTime.ToString("dd/MM/yyyy hh:mm tt")</td>
                         <td>@session.EndTime?.ToString("dd/MM/yyyy hh:mm tt")</td>
                         <td>RM @session.Fee.ToString("0.00")</td>

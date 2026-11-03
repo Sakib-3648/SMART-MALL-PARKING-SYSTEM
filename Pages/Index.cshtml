@@ -4,221 +4,608 @@
 @{
     ViewData["Title"] = "Home";
 }
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success text-center mt-3">
-        @TempData["SuccessMessage"]
-    </div>
-}
 
-<div class="text-center" style="font-size: 20px;">
+<style>
+    .home-container {
+        max-width: 1150px;
+        margin: 35px auto 70px;
+        color: #f1f7ff;
+    }
+
+    .home-hero {
+        padding: 45px 30px;
+        text-align: center;
+        background: #07172D;
+        color: white;
+        border-radius: 20px;
+        margin-bottom: 28px;
+    }
+
+        .home-hero h1 {
+            font-size: clamp(28px, 4vw, 43px);
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .home-hero .subtitle {
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: #171717 !important;
+            line-height: 1.7;
+        }
+
+    .home-panel {
+        height: 100%;
+        padding: 28px;
+        background: #102A4D;
+        color: white;
+        border-radius: 20px;
+    }
+
+        .home-panel h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+    .home-label {
+        color: #a8bdd5;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .home-value {
+        font-size: 19px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+    }
+
+    .home-balance {
+        color: #63edba;
+        font-size: 36px;
+        font-weight: 800;
+    }
+
+    .home-detail {
+        padding: 13px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+        .home-detail:last-child {
+            border-bottom: none;
+        }
+
+    .home-status {
+        display: inline-block;
+        padding: 7px 14px;
+        background: rgba(29, 138, 244, 0.2);
+        color: #8ed4ff;
+        border: 1px solid rgba(56,189,248,0.3);
+        border-radius: 30px;
+        font-weight: 700;
+    }
+
+    .home-actions {
+        margin-top: 30px;
+    }
+
+        .home-actions h2 {
+            font-size: 24px;
+            font-weight: 750;
+            margin-bottom: 20px;
+        }
+
+    .home-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 66px;
+        padding: 15px;
+        color: white;
+        text-decoration: none;
+        font-weight: 650;
+        background: rgba(15, 39, 72, 0.92);
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 15px;
+        transition: 0.2s;
+    }
+
+        .home-action:hover {
+            color: white;
+            background: rgba(20, 100, 170, 0.85);
+            border-color: #38bdf8;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+
+        .home-action i {
+            color: #66caff;
+            font-size: 21px;
+        }
+
+        .home-action.logout:hover {
+            background: rgba(170, 35, 55, 0.85);
+            border-color: #ff7384;
+        }
+
+    .home-notice {
+        padding: 14px;
+        border-radius: 12px;
+        margin-top: 15px;
+        font-size: 14px;
+    }
+
+        .home-notice.success {
+            color: #9ff0cb;
+            background: rgba(22, 163, 74, 0.13);
+        }
+
+        .home-notice.warning {
+            color: #ffda8a;
+            background: rgba(245, 158, 11, 0.13);
+        }
+
+        .home-notice.danger {
+            color: #ff9caa;
+            background: rgba(239, 68, 68, 0.13);
+        }
+
+    @@media (max-width: 576px) {
+        .home-container {
+            margin-top: 15px;
+        }
+
+        .home-hero {
+            padding: 32px 18px;
+        }
+
+        .home-panel {
+            padding: 22px;
+        }
+    }
+
+    /* Reverse Home page colors */
+
+    body {
+        background: #061427 !important;
+        color: #ffffff;
+    }
+
+    .home-hero {
+        background: #FFD700 !important;
+        color: #171717 !important;
+        border: 1px solid #e5b900 !important;
+    }
+
+        .home-hero h1,
+        .home-hero h2,
+        .home-hero p,
+        .home-hero .subtitle {
+            color: #171717 !important;
+        }
+
+    .home-actions h2 {
+        color: #ffffff !important;
+    }
+
+    .home-action {
+        background: #12345a !important;
+        color: #ffffff !important;
+        border: 1px solid #24629a !important;
+    }
+
+        .home-action:hover {
+            background: #24629a !important;
+            color: #ffffff !important;
+        }
+
+    /* HOME PAGE FINAL COLOR DESIGN */
+
+    /* Yellow background outside boxes */
+    body {
+        background: #FFD700 !important;
+        color: #171717;
+    }
+
+    /* White welcome box */
+    .home-hero {
+        background: #FFFFFF !important;
+        color: #171717 !important;
+        border: 1px solid #e5e5e5 !important;
+        border-radius: 20px;
+    }
+
+        /* Black text inside white welcome box */
+        .home-hero h1,
+        .home-hero h2,
+        .home-hero p,
+        .home-hero .subtitle,
+        .home-hero i {
+            color: #171717 !important;
+        }
+
+    /* Keep dashboard boxes dark blue */
+    .home-panel {
+        background: #102A4D !important;
+        color: #FFFFFF !important;
+    }
+
+        /* Keep dashboard text readable */
+        .home-panel h3,
+        .home-panel .home-value {
+            color: #FFFFFF !important;
+        }
+
+    /* Quick Actions heading */
+    .home-actions h2 {
+        color: #171717 !important;
+    }
+
+    /* Keep Quick Action buttons blue */
+    .home-action {
+        background: #17447A !important;
+        color: #FFFFFF !important;
+        border: 1px solid #24629A !important;
+    }
+
+        .home-action:hover {
+            background: #24629A !important;
+            color: #FFFFFF !important;
+        }
+
+</style>
+
+<div class="home-container">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <section class="home-hero">
+        <h1>Summit USJ Mall Parking</h1>
+
+        <p class="subtitle">
+            Smart Mall Parking and Management System
+        </p>
+
+        <p class="subtitle mb-0">
+            <i class="bi bi-geo-alt-fill"></i>
+            Summit USJ1, Subang Jaya, Malaysia
+        </p>
+
+        @if (Model.UserId != null)
+        {
+            <h2 class="mt-4 fs-4">
+                Welcome back, @Model.FullName!
+            </h2>
+
+            <p class="subtitle mb-0">
+                Manage your parking, reservations and payments
+                in one place.
+            </p>
+        }
+        else
+        {
+            <p class="subtitle mt-4">
+                Find a parking space and manage your visit
+                with ease.
+            </p>
+        }
+    </section>
 
     @if (Model.UserId != null)
     {
-        <p class="text-success">
-            Welcome back, <strong>@Model.FullName</strong>!
-        </p>
+        <div class="row g-4">
 
-        <p>
-            Vehicle Number:
-            <strong>@Model.VehicleNumber</strong>
-        </p>
-        <div class="alert alert-success mx-auto mt-3"
-             style="max-width: 450px;">
-            <h5 class="mb-1"> My Credit Balance</h5>
+            <div class="col-lg-4">
+                <div class="home-panel">
+                    <h3>
+                        <i class="bi bi-wallet2 me-2"></i>
+                        My Credit Balance
+                    </h3>
 
-            <h3 class="mb-0">
-                RM @Model.CreditBalance.ToString("0.00")
-            </h3>
+                    <div class="home-balance">
+                        RM @Model.CreditBalance.ToString("0.00")
+                    </div>
+
+                    <div class="home-detail mt-3">
+                        <div class="home-label">
+                            Registered Vehicle
+                        </div>
+
+                        <div class="home-value">
+                            @Model.VehicleNumber
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="home-panel">
+                    <h3>
+                        <i class="bi bi-car-front-fill me-2"></i>
+                        Current Parking
+                    </h3>
+
+                    <div class="home-detail">
+                        <div class="home-label">
+                            Parking Status
+                        </div>
+
+                        <div class="home-status">
+                            @if (Model.CurrentParkingStatus == "Active")
+                            {
+                                @($"{Model.CurrentParkingSpace} — Active")
+                            }
+                            else if (Model.CurrentParkingStatus == "Reserved")
+                            {
+                                @($"{Model.CurrentParkingSpace} — Reserved")
+                            }
+                            else
+                            {
+                                @Model.CurrentParkingStatus
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.CurrentParkingStatus == "Active")
+                    {
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Parking Duration
+                            </div>
+
+                            <div class="home-value">
+                                @Model.ParkingDuration
+                            </div>
+                        </div>
+
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Estimated Fee
+                            </div>
+
+                            <div class="home-value">
+                                RM @Model.CurrentFee.ToString("0.00")
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-
-        <p>
-            Current Parking:
-            <strong>
-                @if (Model.CurrentParkingStatus == "Active")
-                {
-                    @($"{Model.CurrentParkingSpace} — Active")
-                }
-                else if (Model.CurrentParkingStatus == "Reserved")
-                {
-                    @($"{Model.CurrentParkingSpace} — Reserved")
-                }
-                else
-                {
-                    @Model.CurrentParkingStatus
-                }
-            </strong>
-        </p>
-
-        @if (Model.CurrentParkingStatus == "Active")
-        {
-            <p>
-                Parking Duration:
-                <strong>@Model.ParkingDuration</strong>
-            </p>
-
-            <p>
-                Estimated Fee:
-                <strong>
-                    RM @Model.CurrentFee.ToString("0.00")
-                </strong>
-            </p>
-        }
 
         @if (Model.HasActiveReservation)
         {
-            <div class="card mt-4 mb-4 mx-auto"
-                 style="max-width: 650px;">
+            <div class="home-panel mt-4">
+                <h3>
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Current Reservation
+                </h3>
 
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">
-                        Current Reservation
-                    </h4>
-                </div>
+                <div class="row g-3">
 
-                <div class="card-body">
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Parking Space
+                            </div>
 
-                    <p>
-                        Parking Space:
-                        <strong>
-                            @Model.ReservationParkingSpace
-                        </strong>
-                    </p>
+                            <div class="home-value">
+                                @Model.ReservationParkingSpace
+                            </div>
+                        </div>
+                    </div>
 
-                    <p>
-                        Reservation Status:
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Reservation Status
+                            </div>
 
-                        @if (Model.IsReservationOvertime)
-                        {
-                            <strong class="text-danger">
-                                Overtime
-                            </strong>
-                        }
-                        else if (Model.VehicleEnteredAt.HasValue)
-                        {
-                            <strong class="text-success">
-                                Started — Vehicle Inside
-                            </strong>
-                        }
-                        else
-                        {
-                            <strong class="text-success">
-                                Reserved
-                            </strong>
-                        }
-                    </p>
+                            <div class="home-value">
+                                @if (Model.IsReservationOvertime)
+                                {
+                                    <span class="text-danger">
+                                        Overtime
+                                    </span>
+                                }
+                                else if (Model.VehicleEnteredAt.HasValue)
+                                {
+                                    <span style="color:#63edba">
+                                        Started — Vehicle Inside
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color:#63edba">
+                                        Reserved
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
 
-                    <p>
-                        Reservation Duration:
-                        <strong>
-                            @Model.ReservationDuration
-                        </strong>
-                    </p>
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Reservation Duration
+                            </div>
 
-                    <p>
-                        Reservation Start:
-                        <strong>
-                            @Model.ReservationStart?.ToString(
-                                "dd MMM yyyy, hh:mm tt")
-                        </strong>
-                    </p>
+                            <div class="home-value">
+                                @Model.ReservationDuration
+                            </div>
+                        </div>
+                    </div>
 
-                    <p>
-                        Reservation End:
-                        <strong>
-                            @Model.ReservationEnd?.ToString(
-                                "dd MMM yyyy, hh:mm tt")
-                        </strong>
-                    </p>
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Time Remaining
+                            </div>
 
-                    <p>
-                        Reservation Time Remaining:
-                        <strong>
-                            @Model.ReservationTimeRemaining
-                        </strong>
-                    </p>
+                            <div class="home-value">
+                                @Model.ReservationTimeRemaining
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Reservation Start
+                            </div>
+
+                            <div class="home-value">
+                                @Model.ReservationStart?.ToString(
+                                    "dd MMM yyyy, hh:mm tt")
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="home-detail">
+                            <div class="home-label">
+                                Reservation End
+                            </div>
+
+                            <div class="home-value">
+                                @Model.ReservationEnd?.ToString(
+                                    "dd MMM yyyy, hh:mm tt")
+                            </div>
+                        </div>
+                    </div>
 
                     @if (Model.VehicleEnteredAt.HasValue)
                     {
-                        <p>
-                            Vehicle Entered:
-                            <strong>
-                                @Model.VehicleEnteredAt.Value.ToString(
-                                    "dd MMM yyyy, hh:mm tt")
-                            </strong>
-                        </p>
+                        <div class="col-md-6">
+                            <div class="home-detail">
+                                <div class="home-label">
+                                    Vehicle Entered
+                                </div>
 
-                        <p class="text-success">
-                            Vehicle is currently inside the parking area.
-                        </p>
+                                <div class="home-value">
+                                    @Model.VehicleEnteredAt.Value.ToString(
+                                        "dd MMM yyyy, hh:mm tt")
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="home-notice success">
+                                Vehicle is currently inside the parking area.
+                            </div>
+                        </div>
                     }
                     else
                     {
-                        <p class="text-warning">
-                            Vehicle has not entered the parking area yet.
-                        </p>
+                        <div class="col-12">
+                            <div class="home-notice warning">
+                                Vehicle has not entered the parking area yet.
+                            </div>
+                        </div>
                     }
 
                     @if (Model.IsReservationOvertime)
                     {
-                        <p class="text-danger">
-                            <strong>
-                                Reservation time ended.
-                                Overtime charges are now applying.
-                            </strong>
-                        </p>
+                        <div class="col-12">
+                            <div class="home-notice danger">
+                                <strong>
+                                    Reservation time ended.
+                                    Overtime charges are now applying.
+                                </strong>
+                            </div>
+                        </div>
                     }
-
                 </div>
             </div>
         }
     }
 
-    @if (Model.UserId == null)
-    {
-        <div class="mt-3">
-            <a class="btn btn-primary m-1" href="/Login">
-                Login
-            </a>
+    <section class="home-actions">
+        <h2 class="text-center">
+            @if (Model.UserId == null)
+            {
+                <text>Get Started</text>
+            }
+            else
+            {
+                <text>Quick Actions</text>
+            }
+        </h2>
 
-            <a class="btn btn-success m-1" href="/Register">
-                Register
-            </a>
+        <div class="row g-3 justify-content-center">
+
+            @if (Model.UserId == null)
+            {
+                <div class="col-md-4">
+                    <a class="home-action" href="/Login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Login
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action" href="/Register">
+                        <i class="bi bi-person-plus"></i>
+                        Create Account
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4">
+                    <a class="home-action"
+                       href="/Parking/Availability">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        Find Parking
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action"
+                       href="/Parking/Reserve">
+                        <i class="bi bi-calendar-plus"></i>
+                        Reserve Parking
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action"
+                       href="/Parking/MyReservation">
+                        <i class="bi bi-calendar-check"></i>
+                        My Reservations
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action"
+                       href="/Parking/MyParking">
+                        <i class="bi bi-car-front"></i>
+                        My Parking
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action"
+                       href="/Parking/History">
+                        <i class="bi bi-clock-history"></i>
+                        Parking History
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="home-action logout"
+                       href="/Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </a>
+                </div>
+            }
         </div>
-    }
-    else
-    {
-        <div class="mt-3">
-            <a class="btn btn-primary m-1"
-               href="/Parking/Availability">
-                Find Parking
-            </a>
-
-            <a class="btn btn-warning m-1"
-               href="/Parking/Reserve">
-                Reserve Parking
-            </a>
-
-            <a class="btn btn-info m-1"
-               href="/Parking/MyReservation">
-                My Reservations
-            </a>
-
-            <a class="btn btn-success m-1"
-               href="/Parking/MyParking">
-                My Parking
-            </a>
-
-            <a class="btn btn-secondary m-1"
-               href="/Parking/History">
-                Parking History
-            </a>
-
-            <a class="btn btn-danger m-1"
-               href="/Logout">
-                Logout
-            </a>
-        </div>
-    }
+    </section>
 
 </div>

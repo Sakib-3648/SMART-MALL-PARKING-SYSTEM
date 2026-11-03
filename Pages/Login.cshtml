@@ -4,59 +4,272 @@
 @{
     ViewData["Title"] = "Login";
     ViewData["HideNavbar"] = true;
+}
+
 <style>
     header {
-        display: none;
+        display: none !important;
+    }
+
+    body {
+        background: #FFD700 !important;
+        color: #171717;
+    }
+
+    .login-section {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 45px 15px;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 460px;
+        padding: 42px 38px;
+        background: rgba(9, 22, 43, 0.82);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 22px;
+        box-shadow: 0 25px 70px rgba(0,0,0,0.45);
+        color: white;
+    }
+
+    .login-logo {
+        width: 66px;
+        height: 66px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #1375ed, #00b8e8);
+        font-size: 30px;
+        box-shadow: 0 10px 30px rgba(0,160,255,0.3);
+    }
+
+    .login-title {
+        font-weight: 750;
+        font-size: 29px;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+        color: #b4c4d9;
+        text-align: center;
+        font-size: 14px;
+        margin-bottom: 32px;
+    }
+
+    .login-card .form-label {
+        font-weight: 500;
+        margin-bottom: 9px;
+        color: #e2eaf5;
+    }
+
+    .login-card .form-control {
+        background: rgba(255,255,255,0.09);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 12px;
+        padding: 14px 15px;
+        color: white;
+    }
+
+        .login-card .form-control::placeholder {
+            color: #9aaec7;
+        }
+
+        .login-card .form-control:focus {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+        }
+
+    .login-card a {
+        color: #65c9ff;
+        text-decoration: none;
+    }
+
+        .login-card a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+    .login-button {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 700;
+        background: linear-gradient(100deg, #1466e9, #00aeea);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,145,255,0.35);
+        }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+        .password-wrapper input {
+            padding-right: 72px !important;
+        }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: #8bd5ff;
+        cursor: pointer;
+    }
+
+    .login-footer {
+        border-top: 1px solid rgba(255,255,255,0.14);
+        margin-top: 28px;
+        padding-top: 23px;
+        text-align: center;
+    }
+
+        .login-footer p {
+            color: #b4c4d9;
+            margin-bottom: 12px;
+        }
+
+    .register-button {
+        display: inline-block;
+        padding: 11px 25px;
+        border-radius: 10px;
+        border: 1px solid #38bdf8;
+        font-weight: 600;
+    }
+
+    .login-brand-footer {
+        text-align: center;
+        color: #a7bad3;
+        font-size: 12px;
+        margin-top: 25px;
+    }
+
+    @@media (max-width: 576px) {
+        .login-card {
+            padding: 30px 22px;
+        }
     }
 </style>
-}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
+<div class="login-section">
+    <div class="login-card">
 
-            <h2 class="text-center mb-4">User Login</h2>
-            @if(!
-string.IsNullOrEmpty(Model.ErrorMessage))
-{
-              <div class="alert alert-danger">
-                    @Model.ErrorMessage
-                </div>
-}
-            <form method="post">
+        <div class="login-logo">
+            <i class="bi bi-car-front-fill"></i>
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email"
-                           class="form-control"
-                           name="Email"
-                           required />
-                </div>
-                <div class="text-end mb-3">
-                    <a href="/ForgotPassword">Forgot Password?</a>
-                </div>
+        <h1 class="login-title">
+            Welcome Back
+        </h1>
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password"
-                           class="form-control"
+        <p class="login-subtitle">
+            Smart Mall Parking &amp; Management System
+        </p>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <form method="post">
+
+            <div class="mb-4">
+                <label class="form-label" for="loginEmail">
+                    Email Address
+                </label>
+
+                <input id="loginEmail"
+                       type="email"
+                       name="Email"
+                       class="form-control"
+                       placeholder="Enter your email"
+                       autocomplete="email"
+                       required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="loginPassword">
+                    Password
+                </label>
+
+                <div class="password-wrapper">
+                    <input id="loginPassword"
+                           type="password"
                            name="Password"
+                           class="form-control"
+                           placeholder="Enter your password"
+                           autocomplete="current-password"
                            required />
+
+                    <button type="button"
+                            class="password-toggle"
+                            id="togglePassword"
+                            aria-label="Show password">
+                        Show
+                    </button>
                 </div>
+            </div>
 
-                <button type="submit" class="btn btn-primary w-100">
-                    Login
-                </button>
-
-            </form>
-
-            <div class="text-center mt-3">
-                <p>Don't have an account?</p>
-                <a href="/Register" class="btn btn-success">
-                    Create Account
+            <div class="text-end mb-4">
+                <a href="/ForgotPassword">
+                    Forgot Password?
                 </a>
             </div>
 
+            <button type="submit" class="login-button">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Sign In
+            </button>
+
+        </form>
+
+        <div class="login-footer">
+            <p>New to Smart Mall Parking?</p>
+
+            <a href="/Register" class="register-button">
+                Create an Account
+            </a>
         </div>
+
+        <div class="login-brand-footer">
+            Summit USJ1, Subang Jaya, Malaysia
+        </div>
+
     </div>
 </div>
+
+<script>
+    document.getElementById("togglePassword")
+        .addEventListener("click", function () {
+
+            const input =
+                document.getElementById("loginPassword");
+
+            const showing = input.type === "password";
+
+            input.type = showing ? "text" : "password";
+            this.textContent = showing ? "Hide" : "Show";
+            this.setAttribute(
+                "aria-label",
+                showing ? "Hide password" : "Show password"
+            );
+        });
+</script>

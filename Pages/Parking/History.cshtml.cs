@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,10 @@ public class HistoryModel : PageModel
 
     public List<ParkingSession> Sessions { get; set; } = new();
 
+    // ParkingSpaceId -> Floor and Space Number
+    public Dictionary<int, string> ParkingSpaceLabels { get; set; }
+        = new();
+
     public async Task<IActionResult> OnGetAsync()
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -23,10 +28,33 @@ public class HistoryModel : PageModel
         {
             return RedirectToPage("/Login");
         }
+
+        // Load completed parking sessions
         Sessions = await _context.ParkingSessions
-            .Where(p => p.UserId == userId.Value && p.Status == "Completed")
+            .AsNoTracking()
+            .Where(p =>
+                p.UserId == userId.Value &&
+                p.Status == "Completed")
             .OrderByDescending(p => p.EndTime)
             .ToListAsync();
+
+        // Get the actual parking spaces used in these sessions
+        var parkingSpaceIds = Sessions
+            .Select(s => s.ParkingSpaceId)
+            .Distinct()
+            .ToList();
+
+        var parkingSpaces = await _context.ParkingSpaces
+            .AsNoTracking()
+            .Where(p => parkingSpaceIds.Contains(p.ParkingSpaceId))
+            .ToListAsync();
+
+        // Format: Floor 3 — P003
+        ParkingSpaceLabels = parkingSpaces.ToDictionary(
+            p => p.ParkingSpaceId,
+            p => $"Floor {p.FloorNumber} — {p.SpaceNumber}"
+        );
+
         return Page();
     }
 }

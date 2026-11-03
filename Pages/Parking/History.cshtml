@@ -38,7 +38,15 @@
                     {
                         <tr>
                             <td>
-                                P@(session.ParkingSpaceId.ToString("00"))
+                                @if (Model.ParkingSpaceLabels.TryGetValue(
+                                    session.ParkingSpaceId, out var location))
+                                {
+                                    @location
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Unknown Space</span>
+                                }
                             </td>
 
                             <td>
